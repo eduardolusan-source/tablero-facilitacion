@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de diagnóstico de facilitación</title>
+<style>
+:root{
+  --papel:#f7f3ec; --papel2:#fffdf9; --tinta:#2b241d; --tinta2:#5d5246;
+  --linea:#ddd2c2; --acento:#8a5a2b; --acento2:#6f4720; --suave:#efe6d8;
+  --aviso:#fdf3d8; --avisoLinea:#d9b96a; --alerta:#fbe6e0; --alertaLinea:#c67a5f;
+  --ok:#e4ecdf; --okLinea:#8aa377;
+  --sombra:0 1px 2px rgba(43,36,29,.08), 0 6px 18px rgba(43,36,29,.06);
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-tema="claro"]){
+    --papel:#1c1916; --papel2:#252019; --tinta:#ece4d8; --tinta2:#b8ab99;
+    --linea:#3d352b; --acento:#d29a5f; --acento2:#e2b481; --suave:#2c261e;
+    --aviso:#332a15; --avisoLinea:#8a7233; --alerta:#3a231c; --alertaLinea:#a2604a;
+    --ok:#232c1e; --okLinea:#6d8258;
+    --sombra:none;
+  }
+}
+:root[data-tema="oscuro"]{
+  --papel:#1c1916; --papel2:#252019; --tinta:#ece4d8; --tinta2:#b8ab99;
+  --linea:#3d352b; --acento:#d29a5f; --acento2:#e2b481; --suave:#2c261e;
+  --aviso:#332a15; --avisoLinea:#8a7233; --alerta:#3a231c; --alertaLinea:#a2604a;
+  --ok:#232c1e; --okLinea:#6d8258;
+  --sombra:none;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--papel); color:var(--tinta);
+  font:16px/1.55 ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+}
+h1,h2,h3,legend,button,label,input,select,textarea,.ui{font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--acento)}
+header.top{
+  background:var(--papel2); border-bottom:1px solid var(--linea);
+  padding:14px 18px; position:sticky; top:0; z-index:20;
+}
+.topfila{display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; max-width:1200px; margin:0 auto}
+h1{font-size:1.25rem; margin:0; letter-spacing:.2px}
+.sub{color:var(--tinta2); font-size:.9rem; margin:0}
+.espaciador{flex:1}
+nav.pestanas{max-width:1200px; margin:10px auto 0; display:flex; gap:6px; flex-wrap:wrap}
+nav.pestanas button{
+  font-size:.95rem; padding:8px 14px; border:1px solid var(--linea); background:transparent;
+  color:var(--tinta2); border-radius:999px; cursor:pointer;
+}
+nav.pestanas button[aria-selected="true"]{background:var(--acento); border-color:var(--acento); color:#fff8ef}
+nav.pestanas button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{
+  outline:3px solid var(--acento); outline-offset:2px
+}
+main{max-width:1200px; margin:0 auto; padding:18px}
+.cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,440px); gap:22px; align-items:start}
+@media (max-width:900px){.cols{grid-template-columns:1fr}}
+section.bloque{
+  background:var(--papel2); border:1px solid var(--linea); border-radius:var(--r);
+  padding:16px 18px; margin:0 0 16px; box-shadow:var(--sombra);
+}
+section.bloque > h2{font-size:1.02rem; margin:0 0 4px; letter-spacing:.3px}
+section.bloque > .pista{color:var(--tinta2); font-size:.86rem; margin:0 0 12px}
+.campo{margin:0 0 14px}
+.campo > label, fieldset > legend{display:block; font-size:.9rem; font-weight:600; margin:0 0 5px}
+.ayuda{display:block; color:var(--tinta2); font-size:.82rem; margin:2px 0 6px}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  width:100%; padding:9px 10px; font-size:1rem; color:var(--tinta);
+  background:var(--papel); border:1px solid var(--linea); border-radius:8px;
+}
+textarea{min-height:70px; resize:vertical; line-height:1.45}
+fieldset{border:0; padding:0; margin:0 0 14px}
+.opciones{display:flex; flex-wrap:wrap; gap:6px 14px}
+.opciones.col{flex-direction:column; gap:6px}
+.opciones label{
+  display:flex; gap:7px; align-items:flex-start; font-size:.94rem; font-weight:400;
+  padding:5px 9px; border:1px solid var(--linea); border-radius:8px; background:var(--papel); cursor:pointer;
+}
+.opciones label:has(input:checked){border-color:var(--acento); background:var(--suave)}
+.opciones input{margin:3px 0 0; accent-color:var(--acento); min-width:16px; min-height:16px}
+.dosfila{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:560px){.dosfila{grid-template-columns:1fr}}
+.modos{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:8px}
+.modos label{
+  display:block; padding:10px 12px; border:1px solid var(--linea); border-radius:var(--r);
+  background:var(--papel); cursor:pointer; font-size:.94rem;
+}
+.modos label:has(input:checked){border-color:var(--acento); background:var(--suave); box-shadow:inset 0 0 0 1px var(--acento)}
+.modos input{position:absolute; opacity:0; width:1px; height:1px}
+.modos b{display:block; font-size:.98rem; margin-bottom:2px}
+.modos span{color:var(--tinta2); font-size:.84rem}
+button.bt{
+  font-size:.95rem; padding:9px 14px; border-radius:8px; border:1px solid var(--acento);
+  background:var(--acento); color:#fff8ef; cursor:pointer;
+}
+button.bt.sec{background:transparent; color:var(--acento); }
+button.bt.min{border-color:var(--linea); color:var(--tinta2); background:transparent; padding:6px 10px; font-size:.86rem}
+button.bt:hover{filter:brightness(1.06)}
+.botonera{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+.aviso{border:1px solid var(--avisoLinea); background:var(--aviso); border-radius:8px; padding:9px 12px; font-size:.9rem; margin:8px 0}
+.aviso.rojo{border-color:var(--alertaLinea); background:var(--alerta)}
+.aviso.verde{border-color:var(--okLinea); background:var(--ok)}
+.chips{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; padding:0; list-style:none}
+.chips li{
+  display:flex; gap:6px; align-items:center; font-size:.88rem; background:var(--suave);
+  border:1px solid var(--linea); border-radius:999px; padding:4px 6px 4px 11px;
+}
+.chips button{border:0; background:transparent; color:var(--tinta2); cursor:pointer; font-size:1rem; line-height:1; padding:0 4px}
+.filaAdd{display:flex; gap:6px; margin-top:6px}
+.panel{position:sticky; top:118px}
+@media (max-width:900px){.panel{position:static}}
+.barra{height:9px; background:var(--suave); border-radius:999px; overflow:hidden; border:1px solid var(--linea)}
+.barra > i{display:block; height:100%; background:var(--acento); width:0; transition:width .25s}
+.medida{display:flex; justify-content:space-between; font-size:.84rem; color:var(--tinta2); margin:0 0 6px}
+pre.salida{
+  white-space:pre-wrap; word-wrap:break-word; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.83rem; line-height:1.5; background:var(--papel); border:1px solid var(--linea);
+  border-radius:8px; padding:12px; max-height:52vh; overflow:auto; margin:10px 0 0;
+}
+.banco-filtros{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px}
+.tecnica{border:1px solid var(--linea); background:var(--papel2); border-radius:var(--r); padding:12px 14px; margin:0 0 10px}
+.tecnica h3{margin:0 0 3px; font-size:1rem}
+.tecnica .meta{color:var(--tinta2); font-size:.83rem; margin:0 0 6px}
+.tecnica p{margin:0 0 8px; font-size:.93rem}
+.num{color:var(--acento); font-variant-numeric:tabular-nums}
+.hist{border:1px solid var(--linea); background:var(--papel2); border-radius:var(--r); padding:12px 14px; margin:0 0 10px}
+.hist h3{margin:0 0 2px; font-size:1rem}
+.hist .meta{color:var(--tinta2); font-size:.83rem; margin:0 0 8px}
+.oculto{display:none !important}
+.solo-impresion{display:none}
+footer{max-width:1200px; margin:0 auto; padding:8px 18px 40px; color:var(--tinta2); font-size:.82rem}
+.barraGrupo{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 14px;
+  padding:8px 10px; border:1px dashed var(--linea); border-radius:8px; background:var(--papel);
+  font-size:.9rem;
+}
+.barraGrupo .quien{font-weight:600}
+.grupoCard{border:1px solid var(--linea); background:var(--papel2); border-radius:var(--r); padding:12px 14px; margin:0 0 10px}
+.grupoCard h3{margin:0 0 2px; font-size:1rem}
+.grupoCard .meta{color:var(--tinta2); font-size:.83rem; margin:0 0 8px}
+.grupoCard.activo{border-color:var(--acento); box-shadow:inset 0 0 0 1px var(--acento)}
+.tiraCadena{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 14px; padding:9px 11px;
+  border:1px solid var(--acento); border-radius:8px; background:var(--suave); font-size:.9rem;
+}
+.tiraCadena .chips{margin:0}
+.indice-chips{display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 20px; padding:0; list-style:none}
+.indice-chips button{
+  font-size:.85rem; padding:5px 11px; border-radius:999px; border:1px solid var(--linea);
+  background:var(--papel); color:var(--tinta2); cursor:pointer;
+}
+.indice-chips button:hover{border-color:var(--acento); color:var(--acento)}
+.grupo{margin:0 0 26px; scroll-margin-top:132px}
+.grupo h3{font-size:1.06rem; margin:0 0 5px}
+.grupo h3 .cuenta{color:var(--tinta2); font-weight:400; font-size:.85rem}
+.grupo .cuando{margin:0 0 8px}
+.grupo .enclase{
+  margin:0 0 10px; font-size:.92rem; color:var(--tinta2);
+  border-left:3px solid var(--acento); padding:2px 0 2px 10px;
+}
+ul.tecnicas{list-style:none; padding:0; margin:0; border-top:1px solid var(--linea)}
+ul.tecnicas li{
+  border-bottom:1px solid var(--linea); padding:10px 0; display:flex; gap:12px;
+  align-items:baseline; justify-content:space-between; flex-wrap:wrap;
+}
+ul.tecnicas .txt{flex:1 1 300px}
+ul.tecnicas .datos{color:var(--tinta2); font-size:.83rem; margin-top:2px}
+ul.tecnicas b{font-weight:600}
+.pasos{margin:0 0 6px; padding-left:1.2em}
+.pasos li{margin:0 0 7px}
+.ejemplo{
+  border:1px solid var(--linea); background:var(--papel); border-radius:8px;
+  padding:10px 12px; margin:8px 0; font-size:.94rem;
+}
+.ejemplo .mal{color:var(--tinta2)}
+.cadena{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.86rem;
+  background:var(--papel); border:1px solid var(--linea); border-radius:8px;
+  padding:9px 11px; margin:6px 0; overflow-x:auto; white-space:nowrap;
+}
+.instructivo h3{font-size:1.02rem; margin:22px 0 6px}
+.instructivo h3:first-of-type{margin-top:6px}
+.instructivo p, .instructivo li{max-width:66ch}
+@media print{
+  header.top, nav.pestanas, .no-imprimir, .botonera, footer{display:none !important}
+  body{background:#fff; color:#000; font-size:12pt}
+  main{max-width:none; padding:0}
+  .cols{display:block}
+  .panel{position:static}
+  pre.salida{max-height:none; border:0; padding:0; font-size:10.5pt; font-family:ui-serif,Georgia,serif; white-space:pre-wrap}
+  .solo-impresion{display:block}
+  section.bloque{border:0; box-shadow:none; padding:0; background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header class="top no-imprimir">
+  <div class="topfila">
+    <h1>Tablero de diagnóstico de facilitación</h1>
+    <p class="sub">Arma el encargo; el skill diseña la sesión.</p>
+    <span class="espaciador"></span>
+    <button class="bt min ui" id="btTema" type="button">Tema</button>
+  </div>
+  <nav class="pestanas" role="tablist" aria-label="Secciones">
+    <button role="tab" id="tab-disenar" aria-controls="p-disenar" aria-selected="true">Diseñar</button>
+    <button role="tab" id="tab-grupos" aria-controls="p-grupos" aria-selected="false">Grupos</button>
+    <button role="tab" id="tab-banco" aria-controls="p-banco" aria-selected="false">Banco</button>
+    <button role="tab" id="tab-guia" aria-controls="p-guia" aria-selected="false">Guía por función</button>
+    <button role="tab" id="tab-historial" aria-controls="p-historial" aria-selected="false">Historial</button>
+    <button role="tab" id="tab-instructivo" aria-controls="p-instructivo" aria-selected="false">Instructivo</button>
+  </nav>
+</header>
+
+<main>
+<div id="avisoAlmacen" class="aviso oculto no-imprimir" role="status"></div>
+
+<!-- ══════════════════════ DISEÑAR ══════════════════════ -->
+<div id="p-disenar" role="tabpanel" aria-labelledby="tab-disenar">
+<div class="cols">
+
+  <!-- ---------- formulario ---------- -->
+  <form id="form" class="no-imprimir" autocomplete="off">
+
+    <section class="bloque">
+      <h2>¿Qué necesitas?</h2>
+      <p class="pista">Elige el modo: cambia los campos y el encargo que se arma.</p>
+      <div class="modos">
+        <label><input type="radio" name="modo" value="1" checked>
+          <b>Diseñar una sesión nueva</b><span>Del propósito al guion de facilitación.</span></label>
+        <label><input type="radio" name="modo" value="2">
+          <b>Rediseñar una reunión que no funciona</b><span>El comité que es puro reporte, la asamblea donde hablan los mismos.</span></label>
+        <label><input type="radio" name="modo" value="3">
+          <b>Conversación difícil o mediación</b><span>Conflicto entre personas o tema espinoso.</span></label>
+        <label><input type="radio" name="modo" value="4">
+          <b>Evaluar una sesión que ya pasó</b><span>Debrief para aprender y ajustar.</span></label>
+      </div>
+    </section>
+
+    <!-- Bloque 0 -->
+    <section class="bloque" data-modos="1,2,3,4">
+      <h2>Identificación</h2>
+      <div class="barraGrupo">
+        <span>Grupo: <span class="quien" id="txtGrupoActivo">ninguno</span></span>
+        <span class="espaciador" style="flex:1"></span>
+        <button class="bt min" type="button" id="btIrGrupos">Cargar un grupo</button>
+        <button class="bt min" type="button" id="btGuardarGrupo">Guardar estos datos como grupo</button>
+      </div>
+      <div class="dosfila">
+        <div class="campo">
+          <label for="f_nombre">Nombre del encuentro</label>
+          <input type="text" id="f_nombre" placeholder="Foro sobre el futuro de la presa">
+        </div>
+        <div class="campo">
+          <label for="f_fecha">Fecha</label>
+          <input type="date" id="f_fecha">
+        </div>
+      </div>
+      <div class="campo">
+        <label for="f_contexto">Contexto</label>
+        <select id="f_contexto">
+          <option value="">Elige…</option>
+          <option>Asamblea comunitaria</option>
+          <option>Comité o consejo</option>
+          <option>Clase o taller universitario</option>
+          <option>Foro de planeación territorial</option>
+          <option>Grupo de ahorro (Cosecha Colectiva)</option>
+          <option>Equipo de trabajo</option>
+          <option>Tutoría o sesión individual</option>
+          <option value="Otro">Otro</option>
+        </select>
+        <span class="ayuda">Al elegir contexto se precargan valores típicos; todos se pueden cambiar.</span>
+      </div>
+      <div class="campo oculto" id="c_contextoOtro">
+        <label for="f_contextoOtro">¿Cuál contexto?</label>
+        <input type="text" id="f_contextoOtro">
+      </div>
+    </section>
+
+    <!-- Bloque 1 -->
+    <section class="bloque" data-modos="1,2,3">
+      <h2>Propósito</h2>
+      <div class="campo">
+        <label for="f_proposito">¿Qué será distinto al terminar?</label>
+        <span class="ayuda">Evita "revisar avances". Di qué decisión, acuerdo, idea o vínculo debe existir al final que hoy no existe.</span>
+        <textarea id="f_proposito"></textarea>
+        <div id="avisoProposito" class="aviso oculto"></div>
+      </div>
+      <div class="campo">
+        <label for="f_porque">¿Por qué importa? <span class="ayuda" style="display:inline">(opcional)</span></label>
+        <textarea id="f_porque"></textarea>
+      </div>
+      <fieldset id="g_productos">
+        <legend>Productos concretos esperados</legend>
+        <div class="opciones">
+          <label><input type="checkbox" name="producto" value="Decisión tomada">Decisión tomada</label>
+          <label><input type="checkbox" name="producto" value="Acuerdos con responsables y fechas">Acuerdos con responsables y fechas</label>
+          <label><input type="checkbox" name="producto" value="Lista priorizada">Lista priorizada</label>
+          <label><input type="checkbox" name="producto" value="Diagnóstico compartido">Diagnóstico compartido</label>
+          <label><input type="checkbox" name="producto" value="Plan o cronograma">Plan o cronograma</label>
+          <label><input type="checkbox" name="producto" value="Ideas generadas">Ideas generadas</label>
+          <label><input type="checkbox" name="producto" value="Vínculos y confianza">Vínculos y confianza</label>
+          <label><input type="checkbox" name="producto" value="Aprendizaje">Aprendizaje</label>
+          <label><input type="checkbox" name="producto" value="Mapa o material visual">Mapa o material visual</label>
+        </div>
+        <div class="campo" style="margin-top:8px">
+          <label for="f_productoOtro">Otro producto</label>
+          <input type="text" id="f_productoOtro">
+        </div>
+        <div id="avisoProductos" class="aviso oculto"></div>
+      </fieldset>
+    </section>
+
+    <!-- Bloque 2 -->
+    <section class="bloque" data-modos="1,2,3,4">
+      <h2>Personas</h2>
+      <div class="dosfila">
+        <div class="campo">
+          <label for="f_n">¿Cuántas personas?</label>
+          <input type="number" id="f_n" min="1" max="2000" inputmode="numeric">
+        </div>
+        <div class="campo">
+          <label for="f_idioma">Idioma / registro</label>
+          <input type="text" id="f_idioma" placeholder="español, lenguaje llano, sin tecnicismos">
+        </div>
+      </div>
+      <div class="campo">
+        <label for="f_quienes">¿Quiénes son?</label>
+        <span class="ayuda">Roles, comunidades, dependencias.</span>
+        <textarea id="f_quienes"></textarea>
+      </div>
+      <fieldset>
+        <legend>¿Se conocen entre sí?</legend>
+        <div class="opciones">
+          <label><input type="radio" name="conocimiento" value="No se conocen">No se conocen</label>
+          <label><input type="radio" name="conocimiento" value="Se conocen poco">Se conocen poco</label>
+          <label><input type="radio" name="conocimiento" value="Se conocen bien">Se conocen bien</label>
+          <label><input type="radio" name="conocimiento" value="Grupo con historia larga">Grupo con historia larga</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Comodidad con la escritura</legend>
+        <div class="opciones col">
+          <label><input type="radio" name="escritura" value="Todas escriben con soltura">Todas escriben con soltura</label>
+          <label><input type="radio" name="escritura" value="Mixto">Mixto</label>
+          <label><input type="radio" name="escritura" value="Varias personas no leen ni escriben con facilidad">Varias personas no leen ni escriben con facilidad</label>
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label><input type="checkbox" id="f_autoridad" style="width:auto;accent-color:var(--acento)"> ¿Hay autoridad o jerarquía presente?</label>
+        <input type="text" id="f_autoridadTexto" class="oculto" placeholder="presidente del comité, funcionario municipal, el profesor">
+      </div>
+    </section>
+
+    <!-- Bloque 3 -->
+    <section class="bloque" data-modos="1,2,3,4">
+      <h2>Tiempo y espacio</h2>
+      <div class="dosfila">
+        <div class="campo">
+          <label for="f_duracion">Duración total</label>
+          <select id="f_duracion">
+            <option value="">Elige…</option>
+            <option value="45">45 minutos</option>
+            <option value="60">60 minutos</option>
+            <option value="90">90 minutos</option>
+            <option value="120">2 horas</option>
+            <option value="180">3 horas</option>
+            <option value="240">Medio día</option>
+            <option value="480">Día completo</option>
+            <option value="varios">Varios días</option>
+            <option value="otro">Otra duración…</option>
+          </select>
+        </div>
+        <div class="campo oculto" id="c_duracionOtra">
+          <label for="f_duracionOtra">Minutos</label>
+          <input type="number" id="f_duracionOtra" min="10" max="3000" inputmode="numeric">
+        </div>
+      </div>
+      <div id="avisoRealidad" class="aviso oculto"></div>
+      <fieldset>
+        <legend>¿Sesión única o parte de un proceso?</legend>
+        <div class="opciones">
+          <label><input type="radio" name="proceso" value="unica">Sesión única</label>
+          <label><input type="radio" name="proceso" value="proceso">Parte de un proceso</label>
+        </div>
+        <div class="dosfila oculto" id="c_proceso" style="margin-top:8px">
+          <div class="campo"><label for="f_procesoI">¿Cuál sesión?</label><input type="number" id="f_procesoI" min="1" inputmode="numeric"></div>
+          <div class="campo"><label for="f_procesoN">¿De cuántas?</label><input type="number" id="f_procesoN" min="1" inputmode="numeric"></div>
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label for="f_lugar">Lugar</label>
+        <select id="f_lugar">
+          <option value="">Elige…</option>
+          <option>Salón con mesas</option>
+          <option>Salón despejado</option>
+          <option>Aula</option>
+          <option>Patio o explanada</option>
+          <option>Campo abierto o sendero</option>
+          <option>Casa ejidal</option>
+          <option>Virtual</option>
+          <option>Mixto</option>
+        </select>
+        <input type="text" id="f_lugarTexto" style="margin-top:6px" placeholder="Detalle del lugar (opcional)">
+      </div>
+      <fieldset>
+        <legend>¿Se puede mover el mobiliario?</legend>
+        <div class="opciones">
+          <label><input type="radio" name="mobiliario" value="Sí">Sí</label>
+          <label><input type="radio" name="mobiliario" value="No">No</label>
+          <label><input type="radio" name="mobiliario" value="Parcialmente">Parcialmente</label>
+        </div>
+      </fieldset>
+      <fieldset id="g_materiales">
+        <legend>Materiales disponibles</legend>
+        <div class="opciones">
+          <label><input type="checkbox" name="material" value="Papelones">Papelones</label>
+          <label><input type="checkbox" name="material" value="Plumones">Plumones</label>
+          <label><input type="checkbox" name="material" value="Postits">Postits</label>
+          <label><input type="checkbox" name="material" value="Cinta">Cinta</label>
+          <label><input type="checkbox" name="material" value="Tarjetas">Tarjetas</label>
+          <label><input type="checkbox" name="material" value="Pizarrón">Pizarrón</label>
+          <label><input type="checkbox" name="material" value="Proyector">Proyector</label>
+          <label><input type="checkbox" name="material" value="Impresiones">Impresiones</label>
+          <label><input type="checkbox" name="material" value="Semillas, piedras u objetos">Semillas, piedras u objetos</label>
+          <label><input type="checkbox" name="material" value="Nada (hay que llevar todo)">Nada (hay que llevar todo)</label>
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label for="f_restricciones">Restricciones prácticas</label>
+        <span class="ayuda">"La gente llega escalonada", "hay que terminar antes de que se vaya el transporte", "sin electricidad".</span>
+        <textarea id="f_restricciones"></textarea>
+      </div>
+    </section>
+
+    <!-- Bloque 4 -->
+    <section class="bloque" data-modos="1,2,3,4">
+      <h2>Estado del grupo y fase</h2>
+      <p class="pista">El corazón del diagnóstico.</p>
+      <fieldset id="g_estado">
+        <legend>Estado del grupo (puedes marcar varios)</legend>
+        <div class="opciones">
+          <label><input type="checkbox" name="estado" value="Arranque">Arranque</label>
+          <label><input type="checkbox" name="estado" value="Con energía">Con energía</label>
+          <label><input type="checkbox" name="estado" value="Desgastado o escéptico">Desgastado o escéptico</label>
+          <label><input type="checkbox" name="estado" value="En conflicto abierto">En conflicto abierto</label>
+          <label><input type="checkbox" name="estado" value="Con conflicto latente que nadie nombra">Conflicto latente que nadie nombra</label>
+          <label><input type="checkbox" name="estado" value="En duelo o tras una pérdida">En duelo o tras una pérdida</label>
+          <label><input type="checkbox" name="estado" value="Cerrando un ciclo">Cerrando un ciclo</label>
+          <label><input type="checkbox" name="estado" value="Dividido en bandos">Dividido en bandos</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Fase de la decisión (rombo de Kaner)</legend>
+        <div class="opciones col">
+          <label><input type="radio" name="fase" value="Divergir"><span><b>Divergir</b> — falta abrir opciones, hay pocas ideas</span></label>
+          <label><input type="radio" name="fase" value="Zona del gemido"><span><b>Zona del gemido</b> — hay muchas posturas y fricción al integrarlas</span></label>
+          <label><input type="radio" name="fase" value="Converger"><span><b>Converger</b> — ya hay material, toca decidir</span></label>
+          <label><input type="radio" name="fase" value="No sé"><span><b>No sé</b> — que el skill lo diagnostique</span></label>
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label for="f_tensiones">Tensiones o temas espinosos</label>
+        <span class="ayuda">¿Qué se dice en los pasillos que no se dice en la reunión?</span>
+        <textarea id="f_tensiones"></textarea>
+      </div>
+      <fieldset>
+        <legend>¿Hay agravios históricos o desigualdad de poder fuerte?</legend>
+        <div class="opciones">
+          <label><input type="radio" name="agravios" value="Sí">Sí</label>
+          <label><input type="radio" name="agravios" value="Algo">Algo</label>
+          <label><input type="radio" name="agravios" value="No">No</label>
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label for="f_voces">Voces que suelen quedar fuera</label>
+        <span class="ayuda">"Las mujeres jóvenes casi no hablan cuando está el comisariado".</span>
+        <textarea id="f_voces"></textarea>
+      </div>
+    </section>
+
+    <!-- Modo 2 -->
+    <section class="bloque" data-modos="2">
+      <h2>La reunión de hoy</h2>
+      <div class="campo">
+        <label for="f_formatoHoy">Formato dominante hoy</label>
+        <select id="f_formatoHoy">
+          <option value="">Elige…</option>
+          <option>Presentación</option>
+          <option>Reporte de avances</option>
+          <option>Discusión dirigida</option>
+          <option>Discusión abierta</option>
+          <option>Lluvia de ideas</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="f_frecuencia">¿Cada cuándo se reúnen?</label>
+        <input type="text" id="f_frecuencia" placeholder="cada mes, primer martes">
+      </div>
+      <div class="campo">
+        <label for="f_sintoma">¿Qué síntoma es el peor?</label>
+        <select id="f_sintoma">
+          <option value="">Elige…</option>
+          <option>Nadie participa</option>
+          <option>Hablan los mismos</option>
+          <option>Se va por las ramas</option>
+          <option>Acuerdos que nadie cumple</option>
+          <option>Se alarga</option>
+          <option>La gente deja de venir</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Modo 3 -->
+    <section class="bloque" data-modos="3">
+      <h2>El conflicto</h2>
+      <fieldset>
+        <legend>¿Es entre personas concretas o entre posturas del grupo?</legend>
+        <div class="opciones">
+          <label><input type="radio" name="entre" value="Entre personas concretas">Entre personas concretas</label>
+          <label><input type="radio" name="entre" value="Entre posturas del grupo">Entre posturas del grupo</label>
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label for="f_implicados">¿Quiénes están implicados y cuál es tu relación con ellos?</label>
+        <textarea id="f_implicados"></textarea>
+      </div>
+      <fieldset>
+        <legend>¿Ya hablaste por separado con cada parte?</legend>
+        <div class="opciones">
+          <label><input type="radio" name="porSeparado" value="Sí">Sí</label>
+          <label><input type="radio" name="porSeparado" value="No">No</label>
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label for="f_necesidades">¿Qué necesita cada quien, según tú?</label>
+        <textarea id="f_necesidades"></textarea>
+      </div>
+      <fieldset>
+        <legend>¿Hay riesgo de violencia o de daño?</legend>
+        <div class="opciones">
+          <label><input type="radio" name="riesgo" value="Sí">Sí</label>
+          <label><input type="radio" name="riesgo" value="No">No</label>
+        </div>
+        <div id="avisoRiesgo" class="aviso rojo oculto">
+          Con riesgo de violencia o daño esto no es un caso para diseñar en solitario: busca acompañamiento y una instancia que respalde. El encargo lo va a señalar y le pedirá a Claude que empiece por ahí.
+        </div>
+      </fieldset>
+      <div class="campo">
+        <label for="f_cofacilita">¿Habrá otra persona co-facilitando?</label>
+        <input type="text" id="f_cofacilita" placeholder="quién, o «no»">
+      </div>
+    </section>
+
+    <!-- Modo 4 -->
+    <section class="bloque" data-modos="4">
+      <h2>Lo que pasó</h2>
+      <div class="aviso oculto" id="avisoEvaluada"></div>
+      <div class="campo">
+        <label for="f_addCadenaUsada">Cadena que usé (en orden)</label>
+        <span class="ayuda">Lo que de verdad corriste, aunque no haya sido lo planeado. Es lo que hace que el historial sirva de repertorio.</span>
+        <ul class="chips" id="listaCadenaUsada"></ul>
+        <div class="filaAdd">
+          <input type="text" id="f_addCadenaUsada" list="listaTecnicas" placeholder="nombre de la técnica">
+          <button class="bt sec" type="button" id="btAddCadenaUsada">Sumar</button>
+        </div>
+      </div>
+      <div class="campo"><label for="f_quePaso">¿Qué pasó?</label><textarea id="f_quePaso"></textarea></div>
+      <div class="campo"><label for="f_queFunciono">¿Qué funcionó?</label><textarea id="f_queFunciono"></textarea></div>
+      <div class="campo"><label for="f_dondeAtoro">¿Dónde se atoró?</label><textarea id="f_dondeAtoro"></textarea></div>
+      <div class="campo"><label for="f_queDijeron">¿Qué dijeron los participantes?</label><textarea id="f_queDijeron"></textarea></div>
+      <div class="campo"><label for="f_queDecidieron">¿Qué decidieron al final?</label><textarea id="f_queDecidieron"></textarea></div>
+      <div class="campo"><label for="f_queSigue">¿Qué sigue?</label><textarea id="f_queSigue"></textarea></div>
+      <div class="botonera">
+        <button class="bt sec" type="button" id="btAprendizajeAlGrupo">Pasar este aprendizaje al perfil del grupo</button>
+      </div>
+      <span class="ayuda">Escribe una línea en la historia previa del grupo, para que el próximo encargo con ellos ya la traiga.</span>
+    </section>
+
+    <!-- Bloque 5 -->
+    <section class="bloque" data-modos="1,2,3">
+      <h2>Historia previa</h2>
+      <div class="campo"><label for="f_intentado">¿Qué se ha intentado antes y cómo salió?</label><textarea id="f_intentado"></textarea></div>
+      <div class="campo"><label for="f_noRepetir">¿Qué NO quieres repetir?</label><textarea id="f_noRepetir"></textarea></div>
+      <div class="campo">
+        <label for="f_conocidas">Técnicas que ya conocen o ya usaste con este grupo</label>
+        <input type="text" id="f_conocidas" placeholder="1-2-4-Todos, lluvia de ideas en papelón">
+      </div>
+    </section>
+
+    <!-- Bloque 6 -->
+    <section class="bloque" data-modos="1,2,3,4">
+      <h2>Tus preferencias</h2>
+      <div class="campo">
+        <label for="f_addConsiderar">Técnicas que quiero considerar</label>
+        <span class="ayuda">Se llenan desde la pestaña Banco o a mano.</span>
+        <ul class="chips" id="listaConsiderar"></ul>
+        <div class="filaAdd">
+          <input type="text" id="f_addConsiderar" list="listaTecnicas" placeholder="nombre de la técnica">
+          <button class="bt sec" type="button" id="btAddConsiderar">Sumar</button>
+        </div>
+      </div>
+      <div class="campo" id="c_cadenaPropuesta">
+        <label for="f_addCadena">Cadena que se me ocurre (en orden)</label>
+        <span class="ayuda">Opcional. Se llena desde la Guía con «＋ a mi cadena», o a mano. Dos a cuatro piezas: apertura, desarrollo, cierre.</span>
+        <ul class="chips" id="listaCadena"></ul>
+        <div class="filaAdd">
+          <input type="text" id="f_addCadena" list="listaTecnicas" placeholder="nombre de la técnica">
+          <button class="bt sec" type="button" id="btAddCadena">Sumar</button>
+        </div>
+      </div>
+      <div class="campo">
+        <label for="f_addEvitar">Técnicas a evitar</label>
+        <ul class="chips" id="listaEvitar"></ul>
+        <div class="filaAdd">
+          <input type="text" id="f_addEvitar" list="listaTecnicas" placeholder="nombre de la técnica">
+          <button class="bt sec" type="button" id="btAddEvitar">Sumar</button>
+        </div>
+      </div>
+      <fieldset id="g_entregable">
+        <legend>Entregable que quiero de Claude</legend>
+        <div class="opciones col">
+          <label><input type="checkbox" name="entregable" value="un guion de facilitación completo" checked>Guion de facilitación completo</label>
+          <label><input type="checkbox" name="entregable" value="solo la cadena recomendada con justificación">Solo la cadena recomendada con justificación</label>
+          <label><input type="checkbox" name="entregable" value="una versión imprimible para llevar">Versión imprimible para llevar</label>
+          <label><input type="checkbox" name="entregable" value="un mensaje de convocatoria para WhatsApp">Mensaje de convocatoria para WhatsApp</label>
+          <label><input type="checkbox" name="entregable" value="la lista de materiales para comprar o preparar">Lista de materiales para comprar o preparar</label>
+        </div>
+      </fieldset>
+      <div class="campo"><label for="f_notas">Notas libres</label><textarea id="f_notas"></textarea></div>
+    </section>
+  </form>
+
+  <!-- ---------- panel de salida ---------- -->
+  <div class="panel">
+    <section class="bloque">
+      <h2 class="no-imprimir">El encargo</h2>
+      <div class="no-imprimir">
+        <div class="medida"><span id="txtCompletitud">Diagnóstico: 0%</span><span id="txtFaltan"></span></div>
+        <div class="barra"><i id="barraCompletitud"></i></div>
+      </div>
+      <pre class="salida" id="salida" aria-live="polite"></pre>
+      <div class="solo-impresion" id="impresionMateriales"></div>
+      <div class="botonera no-imprimir">
+        <button class="bt" type="button" id="btCopiar">Copiar encargo</button>
+        <button class="bt sec" type="button" id="btMd">Descargar .md</button>
+        <button class="bt sec" type="button" id="btJson">Descargar .json</button>
+        <button class="bt sec" type="button" id="btGuardar">Guardar en historial</button>
+        <button class="bt min" type="button" id="btImprimir">Imprimir</button>
+        <button class="bt min" type="button" id="btLimpiar">Limpiar</button>
+      </div>
+      <div id="avisoCopia" class="aviso verde oculto no-imprimir" role="status"></div>
+    </section>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════ BANCO ══════════════════════ -->
+<div id="p-banco" role="tabpanel" aria-labelledby="tab-banco" class="oculto no-imprimir">
+  <section class="bloque">
+    <h2>Banco de técnicas</h2>
+    <p class="pista" id="pistaBanco"></p>
+    <div class="banco-filtros">
+      <div class="campo">
+        <label for="b_texto">Buscar</label>
+        <input type="text" id="b_texto" placeholder="nombre o palabra">
+      </div>
+      <div class="campo">
+        <label for="b_proposito">Propósito</label>
+        <select id="b_proposito"><option value="">Cualquiera</option></select>
+      </div>
+      <div class="campo">
+        <label for="b_fase">Fase del rombo</label>
+        <select id="b_fase">
+          <option value="">Cualquiera</option>
+          <option value="divergente">Divergente</option>
+          <option value="gemido">Zona del gemido</option>
+          <option value="convergente">Convergente</option>
+          <option value="cierre">Cierre</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="b_fuente">Fuente</label>
+        <select id="b_fuente"><option value="">Cualquiera</option></select>
+      </div>
+      <div class="campo">
+        <label for="b_grupo">Tamaño de grupo</label>
+        <input type="number" id="b_grupo" min="1" placeholder="p. ej. 30" inputmode="numeric">
+      </div>
+      <div class="campo">
+        <label for="b_tiempo">Tiempo disponible: <span id="b_tiempoTxt">sin límite</span></label>
+        <input type="range" id="b_tiempo" min="0" max="240" step="15" value="0" style="width:100%">
+      </div>
+    </div>
+    <div class="opciones" style="margin-bottom:10px">
+      <label><input type="checkbox" id="b_sinEscritura">Sin escritura</label>
+      <label><input type="checkbox" id="b_movimiento">Requiere moverse</label>
+      <button class="bt min" type="button" id="btLimpiarFiltros">Limpiar filtros</button>
+    </div>
+    <p class="pista" id="conteoBanco"></p>
+    <div id="resultados"></div>
+    <div class="botonera">
+      <button class="bt min" type="button" id="btImportarCat">Importar catálogo .json</button>
+      <button class="bt min" type="button" id="btExportarCat">Exportar catálogo .json</button>
+      <input type="file" id="fileCat" accept=".json,application/json" class="oculto">
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════ GRUPOS ══════════════════════ -->
+<div id="p-grupos" role="tabpanel" aria-labelledby="tab-grupos" class="oculto no-imprimir">
+  <section class="bloque">
+    <h2>Grupos</h2>
+    <p class="pista">Lo que no cambia entre sesiones vive aquí: quiénes son, si se conocen, la escritura, el lugar,
+      los materiales, las voces que suelen quedar fuera y la historia previa. Cargas el grupo y solo llenas propósito,
+      fecha, tiempo y tensiones. Las plantillas que vienen de fábrica son un punto de partida: edítalas con lo que sabes
+      de cada grupo real y guárdalas con su nombre.</p>
+    <div class="botonera">
+      <button class="bt" type="button" id="btNuevoGrupo">Guardar el formulario actual como grupo</button>
+      <button class="bt min" type="button" id="btSemillas">Restaurar plantillas de fábrica</button>
+    </div>
+    <div id="listaGrupos" style="margin-top:14px"></div>
+  </section>
+</div>
+
+<!-- ══════════════════════ GUÍA POR FUNCIÓN ══════════════════════ -->
+<div id="p-guia" role="tabpanel" aria-labelledby="tab-guia" class="oculto">
+  <section class="bloque">
+    <h2>Para qué sirve cada técnica</h2>
+    <p class="pista">Las 69 fichas del skill agrupadas por lo que resuelven. Sirve para dos cosas: encontrar la técnica
+      cuando ya sabes qué necesitas, y darte cuenta de qué necesitas cuando solo tienes el problema.
+      Varias aparecen en más de un grupo, porque sirven para más de una cosa.</p>
+    <div class="opciones no-imprimir" style="margin:0 0 12px">
+      <label><input type="checkbox" id="g_clase"><span>Solo lo que cabe en una clase (grupo de ~25, hasta 90 minutos)</span></label>
+      <button class="bt min" type="button" id="btImprimirGuia">Imprimir esta guía</button>
+    </div>
+    <div class="tiraCadena no-imprimir oculto" id="tiraCadena">
+      <span>Mi cadena:</span>
+      <ul class="chips" id="listaCadenaGuia"></ul>
+      <button class="bt min" type="button" id="btVerCadena">Verla en el encargo</button>
+      <button class="bt min" type="button" id="btVaciarCadena">Vaciar</button>
+    </div>
+    <ul class="indice-chips no-imprimir" id="indiceGuia"></ul>
+    <div id="cuerpoGuia"></div>
+  </section>
+</div>
+
+<!-- ══════════════════════ INSTRUCTIVO ══════════════════════ -->
+<div id="p-instructivo" role="tabpanel" aria-labelledby="tab-instructivo" class="oculto">
+  <section class="bloque instructivo">
+    <h2>Cómo se usa este tablero</h2>
+    <p class="pista">Escrito para leerse una vez. Después ya no hace falta.</p>
+
+    <h3>Qué es y qué no es</h3>
+    <p>Este archivo <b>no habla con Claude</b> ni con ningún servicio: no hay internet de por medio. Lo que hace es
+      hacerte el diagnóstico completo de la sesión y redactar con él un encargo bien armado, para que lo pegues en
+      Claude, donde el skill <b>facilitación</b> se activa solo y hace el diseño. Todo lo que escribes se queda en tu
+      computadora.</p>
+    <p>La razón de que exista: las sesiones fallan por diagnóstico, no por técnica. Cuando el encargo va a medias
+      —sin el tiempo real, sin el número de personas, sin las tensiones—, el skill adivina, y adivina genérico.</p>
+
+    <h3>El flujo, en cinco pasos</h3>
+    <ol class="pasos">
+      <li>Abre el archivo y elige el <b>modo</b> (arriba de todo).</li>
+      <li>Carga el <b>grupo</b> si ya lo tienes guardado: llena de golpe quiénes son, el lugar, los materiales y
+        todo lo que no cambia entre sesiones.</li>
+      <li>Llena solo lo de esta sesión: propósito, fecha, tiempo, estado del grupo y tensiones. La barra de arriba
+        del encargo te dice qué tan listo está y qué falta.</li>
+      <li>Si quieres, pasa al <b>Banco</b> o a la <b>Guía</b> y suma alguna técnica, o arma tu cadena tentativa
+        con «＋ a mi cadena».</li>
+      <li>Copia el encargo y pégalo en Claude. Si te pregunta algo, contéstale: son las tres preguntas que le pediste.</li>
+      <li>Guarda el encargo en el <b>Historial</b>. La próxima vez con ese mismo grupo lo duplicas y solo cambias lo
+        que cambió.</li>
+    </ol>
+
+    <h3>Grupos: llena una vez, reusa siempre</h3>
+    <p>Los campos que más cuesta llenar no son de la sesión, son del <b>grupo</b>: quiénes son, si se conocen, la
+      comodidad con la escritura, si hay autoridad presente, el lugar, los materiales que hay, las restricciones de
+      siempre, las voces que suelen quedar fuera y la historia previa. Eso no cambia de una sesión a otra.</p>
+    <p>En la pestaña <b>Grupos</b> guardas cada uno con su nombre —<i>Comité de agua de La Florida</i>,
+      <i>Cosecha Colectiva — grupo San Juan</i>, <i>Etimologías 2026-2</i>— y la próxima vez lo cargas de un clic.
+      Vienen seis plantillas de fábrica (asamblea ejidal, grupo de ahorro, comité, clase de 90 minutos, foro
+      territorial, tutoría): úsalas como punto de partida, edítalas con lo que sabes de cada grupo real y guárdalas
+      con su nombre propio. Con el grupo cargado, un encargo completo te toma menos de un minuto.</p>
+
+    <h3>El ciclo completo: diseñar, facilitar, evaluar</h3>
+    <p>Aquí está el valor que se acumula. Cuando guardas un encargo en el historial se guarda también la cadena que
+      pensabas usar. Después de la sesión, entra al <b>Historial</b> y dale <b>«Evaluar esta sesión»</b>: el
+      diagnóstico se carga solo, el modo cambia a evaluar y solo cuentas cómo salió. Ahí registras la
+      <b>cadena que usaste de verdad</b>, aunque no haya sido la planeada.</p>
+    <p>Al final, el botón <b>«Pasar este aprendizaje al perfil del grupo»</b> escribe una línea en su historia previa
+      —fecha, cadena, qué funcionó, dónde se atoró— y el próximo encargo con ese grupo ya la lleva. Después de un
+      semestre tienes tu propio repertorio de cadenas probadas con gente real, que vale más que las 69 fichas: es
+      justamente lo que recomienda el libro de Liberating Structures y casi nadie hace.</p>
+
+    <h3>Los cuatro modos</h3>
+    <ul class="pasos">
+      <li><b>Diseñar una sesión nueva</b> — el de siempre. Termina en guion de facilitación.</li>
+      <li><b>Rediseñar una reunión que no funciona</b> — el comité que es puro reporte, la asamblea donde hablan los
+        mismos. Aquí el skill primero diagnostica qué formato convencional la domina, y te da dos versiones: un cambio
+        mínimo que puedes probar la próxima sin anunciar nada, y el rediseño completo.</li>
+      <li><b>Conversación difícil o mediación</b> — te dice antes que nada si el caso es de mediación entre personas,
+        de litigar posturas del grupo, de abrir un tema indecible o de trabajo de fuego. No son lo mismo y confundirlos
+        es la manera más rápida de romper algo.</li>
+      <li><b>Evaluar una sesión que ya pasó</b> — el debrief. Vale la pena aunque haya salido bien: es lo que hace que
+        el grupo aprenda y no solo tú.</li>
+    </ul>
+
+    <h3>Los seis campos que de verdad cambian el diseño</h3>
+    <p>Si vas con prisa, llena estos y manda el encargo así: <b>propósito, cuántas personas, cuánto tiempo, fase del
+      rombo, comodidad con la escritura y las tensiones</b>. Lo demás afina; estos deciden.</p>
+
+    <h3>Cómo escribir el propósito</h3>
+    <p>El propósito no es el tema ni el formato: es qué será distinto al terminar.</p>
+    <div class="ejemplo">
+      <p class="mal">Flojo: «revisar avances del proyecto del arroyo».</p>
+      <p>Bueno: «que el comité decida si el arroyo se cierra al ganado, y quién lo va a vigilar».</p>
+    </div>
+    <p>El tablero te avisa si escribes uno de los flojos. No es corrección de estilo: con el propósito flojo, cualquier
+      técnica parece buena y ninguna sirve.</p>
+
+    <h3>La fase del rombo, en tres líneas</h3>
+    <ul class="pasos">
+      <li><b>Divergir</b>: hay pocas ideas y las de siempre. Toca abrir y proteger lo raro de la crítica.</li>
+      <li><b>Zona del gemido</b>: ya hay muchas posturas y cuesta integrarlas; la gente se repite, se impacienta, dice
+        «estamos perdiendo el tiempo». No es fracaso, es el paso de decir la opinión propia a entender la ajena.
+        Nombrarla en voz alta ya destraba: «esto que sentimos es normal y tiene nombre».</li>
+      <li><b>Converger</b>: ya hay material y toca decidir. Aquí van priorización y escala de acuerdo.</li>
+    </ul>
+    <p>Si no lo tienes claro, marca <b>No sé</b>: el encargo le pedirá a Claude que lo diagnostique con lo que
+      describiste. Es una respuesta legítima y frecuente.</p>
+
+    <h3>Nunca una técnica suelta: cadenas</h3>
+    <p>El skill siempre propone una cadena de 2 a 4 estructuras con apertura (conexión), desarrollo (el trabajo de
+      fondo) y cierre (compromisos o síntesis). Arcos de referencia:</p>
+    <div class="cadena">Reunión multiactor (2–3 h): conectar → temas comunes → ideas audaces → qué NO hacer → a quién falta incluir → siguientes pasos</div>
+    <div class="cadena">Soluciones cotidianas: TRIZ → 1-2-4-Todos → Soluciones del 15% → Troika</div>
+    <div class="cadena">Desatar acción local: Open Space → Especificaciones mínimas → 25/10</div>
+    <p>Y dos consejos del libro que valen para todo: componer de más (mejor cadena que no se termina que sesión que se
+      queda corta) y permitirte improvisar si una estructura no prende en el momento; el diseño es modular.</p>
+
+    <h3>Para clases con universitarios</h3>
+    <ul class="pasos">
+      <li>Los 90 minutos del horario son unos 75 reales: descuenta entradas, salidas y el acomodo del salón. Ponlo así
+        en el campo de duración, o el guion te va a salir apretado.</li>
+      <li>Marca <b>«Aula»</b> y si el mobiliario se puede mover o no: cambia por completo qué técnicas caben.</li>
+      <li>En la Guía, prende <b>«Solo lo que cabe en una clase»</b>: te deja las que funcionan con ~25 personas en
+        90 minutos o menos.</li>
+      <li>En el campo de propósito, di qué deben poder hacer al salir, no qué tema vas a cubrir. Es la misma diferencia
+        que entre objetivo y contenido.</li>
+      <li>Las estructuras sirven también para evaluar: cerrar con Qué / Y eso qué / Ahora qué te da, de paso, la
+        retroalimentación de la sesión.</li>
+      <li>Si es la primera vez con ese grupo, empieza con algo sencillo (1-2-4-Todos) antes de meter cosas de más
+        aparato. Las experiencias convencen; los anuncios no.</li>
+    </ul>
+
+    <h3>Respaldo, privacidad e impresión</h3>
+    <p>El borrador, los grupos y el historial se guardan en este navegador, y solo en este. Por eso, en el
+      <b>Historial</b>, <b>«Exportar todo»</b> te baja un solo <code>.json</code> con los grupos y los encargos:
+      guárdalo en Drive y con <b>«Importar todo»</b> lo levantas en la laptop, en otro navegador o después de una
+      limpieza de caché. Hazlo de vez en cuando; es el único respaldo que existe.</p>
+    <p>Si Chrome bloquea el guardado al abrir el archivo por doble clic, el tablero te avisa una vez y sigue
+      funcionando: ahí usa <b>Descargar .md</b> (el encargo) y <b>Descargar .json</b> (el diagnóstico completo).</p>
+    <p>Al imprimir sale lo que estés viendo: desde <b>Diseñar</b>, el encargo con la lista de materiales; desde la
+      <b>Guía</b>, la guía completa —útil para llevarla en papel a donde no hay señal—.</p>
+
+    <h3>Si algún día cambian las fichas</h3>
+    <p>El Banco y la Guía se generan de las fichas reales del skill con <code>generar-catalogo.py</code>. Si editas o
+      agregas fichas, corre el generador apuntando a la carpeta <code>references/estructuras</code> y el catálogo
+      embebido se rehace solo. También puedes importar un catálogo <code>.json</code> desde el Banco, sin tocar el
+      archivo.</p>
+  </section>
+</div>
+
+<!-- ══════════════════════ HISTORIAL ══════════════════════ -->
+<div id="p-historial" role="tabpanel" aria-labelledby="tab-historial" class="oculto no-imprimir">
+  <section class="bloque">
+    <h2>Historial</h2>
+    <p class="pista">Últimos 20 encargos guardados en este navegador.</p>
+    <div class="botonera">
+      <button class="bt min" type="button" id="btExportarTodo">Exportar todo (.json)</button>
+      <button class="bt min" type="button" id="btImportarTodo">Importar todo (.json)</button>
+      <input type="file" id="fileTodo" accept=".json,application/json" class="oculto">
+    </div>
+    <p class="ayuda">El respaldo incluye los grupos y el historial. Guárdalo en Drive y así lo mueves entre la laptop
+      y el celular, o lo recuperas si el navegador se limpia.</p>
+    <div id="listaHistorial"></div>
+  </section>
+</div>
+
+<datalist id="listaTecnicas"></datalist>
+
+<footer class="no-imprimir">
+  Herramienta local. No se conecta a internet ni envía datos a ninguna parte. Estructuras basadas en
+  Liberating Structures (Lipmanowicz &amp; McCandless, CC BY-SA 4.0) y en técnicas destiladas de Parker,
+  Gamestorming, Kaner, ORID/ICA, Mindell, Block, brown y Geilfus/IICA.
+</footer>
+</main>
+
+<script>
+"use strict";
+/* ══════════════════════ utilidades ══════════════════════ */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const val = id => { const e = $("#" + id); return e ? String(e.value || "").trim() : ""; };
+const num = id => { const v = val(id); return v === "" ? null : Number(v); };
+const chk = id => { const e = $("#" + id); return !!(e && e.checked); };
+const radio = name => { const e = $('input[name="' + name + '"]:checked'); return e ? e.value : ""; };
+const marcados = name => $$('input[name="' + name + '"]:checked').map(e => e.value);
+const mostrar = (el, si) => { if (el) el.classList.toggle("oculto", !si); };
+
+/* localStorage best-effort */
+const almacen = (() => {
+  let ok = true, avisado = false;
+  try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); } catch (e) { ok = false; }
+  function avisa() {
+    if (ok || avisado) return; avisado = true;
+    const a = $("#avisoAlmacen");
+    a.textContent = "Este navegador no permite guardar en local (pasa con archivos abiertos por doble clic). El tablero funciona igual, pero el borrador y el historial no se conservan: usa «Descargar .md» y «Descargar .json».";
+    a.classList.remove("oculto");
+  }
+  return {
+    ok: () => ok,
+    get(k, def) { if (!ok) { avisa(); return def; } try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } },
+    set(k, v) { if (!ok) { avisa(); return false; } try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { avisa(); return false; } }
+  };
+})();
+
+function descargar(nombre, texto, tipo) {
+  try {
+    const b = new Blob([texto], { type: (tipo || "text/plain") + ";charset=utf-8" });
+    const u = URL.createObjectURL(b);
+    const a = document.createElement("a");
+    a.href = u; a.download = nombre; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(u); a.remove(); }, 400);
+  } catch (e) { alert("No se pudo descargar en este navegador. Copia el texto a mano."); }
+}
+function copiar(texto, done) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texto).then(() => done(true), () => done(copiaVieja(texto)));
+  } else { done(copiaVieja(texto)); }
+}
+function copiaVieja(texto) {
+  try {
+    const t = document.createElement("textarea");
+    t.value = texto; t.setAttribute("readonly", ""); t.style.position = "fixed"; t.style.top = "-1000px";
+    document.body.appendChild(t); t.select(); t.setSelectionRange(0, texto.length);
+    const ok = document.execCommand("copy"); t.remove(); return ok;
+  } catch (e) { return false; }
+}
+const hoyISO = () => new Date().toISOString().slice(0, 10);
+function fechaLarga(iso) {
+  if (!iso) return "";
+  const p = iso.split("-"); if (p.length !== 3) return iso;
+  const m = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  return Number(p[2]) + " de " + m[Number(p[1]) - 1] + " de " + p[0];
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+/* ══════════════════════ catálogo de técnicas ══════════════════════
+   Generado por generar-catalogo.py a partir de las fichas reales del
+   skill `facilitacion` (references/estructuras/*.md, references/indice.md
+   y fundamentos/matchmaker.md). Los campos tiempoTexto y grupoTexto son
+   la línea literal de la ficha; minutos y grupo son su lectura numérica,
+   solo para filtrar. No editar a mano: volver a correr el generador.
+   ═══════════════════════════════════════════════════════════════════ */
+/* CATALOGO_INICIO */
+const CATALOGO_BASE = [{"n": 1,"nombre": "1-2-4-All (1-2-4-Todos)","archivo": "01-1-2-4-all.md","fuente": "Liberating Structures","tipo": "generar ideas e involucrar a todas las voces","proposito": ["abrir ideas de todas las voces"],"fase": ["divergente","convergente"],"grupoMin": 4,"grupoMax": null,"minutosMin": 15,"minutosMax": 15,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Involucra a cada persona simultáneamente en generar preguntas, ideas y propuestas ante un reto compartido.","tiempoTexto": "~15 min","grupoTexto": "4+ (cualquier tamaño)"},{"n": 2,"nombre": "Impromptu Networking (Conexiones relámpago)","archivo": "02-impromptu-networking.md","fuente": "Liberating Structures","tipo": "apertura, conexión y enfoque compartido","proposito": ["conectar al arrancar"],"fase": ["divergente"],"grupoMin": 10,"grupoMax": 300,"minutosMin": 20,"minutosMax": 20,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Comparte rápidamente retos y expectativas mientras se tejen conexiones nuevas. En veinte minutos cada persona conversa con tres desconocidos, lo que dispara la participación posterior, revela patrones en los intereses del grupo…","tiempoTexto": "~20 min","grupoTexto": "10 a 300"},{"n": 3,"nombre": "9 Whys (Nueve porqués)","archivo": "03-nine-whys.md","fuente": "Liberating Structures","tipo": "clarificar propósito","proposito": ["aclarar el propósito"],"fase": ["divergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 20,"minutosMax": 20,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Hace emerger, con una sencillez sorprendente, el propósito profundo del trabajo de cada quien y del grupo.","tiempoTexto": "~20 min","grupoTexto": "cualquiera, en pares"},{"n": 4,"nombre": "Wicked Questions (Preguntas endiabladas)","archivo": "04-wicked-questions.md","fuente": "Liberating Structures","tipo": "articular paradojas y abrir estrategia","proposito": ["nombrar tensiones y paradojas"],"fase": ["gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 25,"minutosMax": 25,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Articula los desafíos paradójicos que un grupo debe sostener al mismo tiempo para tener éxito, en lugar de fingir que se resuelven eligiendo un solo lado.","tiempoTexto": "~25 min","grupoTexto": "cualquiera"},{"n": 5,"nombre": "Appreciative Interviews (Entrevistas apreciativas)","archivo": "05-appreciative-interviews.md","fuente": "Liberating Structures","tipo": "descubrir lo que funciona y construir confianza","proposito": ["descubrir lo que ya funciona"],"fase": ["divergente"],"grupoMin": 4,"grupoMax": null,"minutosMin": 60,"minutosMax": 60,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Descubre y difunde las causas raíz del éxito ya presente en el grupo, contando historias en lugar de listar problemas.","tiempoTexto": "~60 min","grupoTexto": "desde 4 hasta cientos"},{"n": 6,"nombre": "Creative Destruction / TRIZ (Destrucción creativa)","archivo": "06-creative-destruction.md","fuente": "Liberating Structures","tipo": "dejar de hacer lo que estorba; innovación","proposito": ["dejar de hacer lo contraproducente"],"fase": ["divergente","gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 35,"minutosMax": 35,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Crea espacio para la innovación haciendo primero la pregunta inversa: ¿cómo lograríamos con toda seguridad el peor resultado posible? Con humor y seguridad psicológica, el grupo admite lo contraproducente que ya hace y decide…","tiempoTexto": "~35 min","grupoTexto": "cualquiera, en grupos pequeños"},{"n": 7,"nombre": "15% Solutions (Soluciones del 15%)","archivo": "07-15-percent-solutions.md","fuente": "Liberating Structures","tipo": "pasar a la acción desde el poder propio","proposito": ["pasar a la acción"],"fase": ["cierre"],"grupoMin": null,"grupoMax": null,"minutosMin": 20,"minutosMax": 20,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Descubre y enfoca lo que cada persona sí puede hacer ahora, sin más recursos ni más autoridad que los que ya tiene. Sustituye la queja sobre lo que no está en nuestras manos por pasos inmediatos y acumulables.","tiempoTexto": "~20 min","grupoTexto": "cualquiera"},{"n": 8,"nombre": "Troika Consulting (Consultoría en tríos)","archivo": "08-troika-consulting.md","fuente": "Liberating Structures","tipo": "ayuda entre pares","proposito": ["ayuda entre pares"],"fase": ["gemido","convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 30,"minutosMax": 30,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Obtiene ayuda práctica e imaginativa de colegas de manera inmediata. Cada persona expone un reto y recibe el consejo de dos \"consultores\", con el giro clave de escuchar de espaldas: al no poder intervenir, escucha de verdad.","tiempoTexto": "~30 min","grupoTexto": "cualquiera divisible en tríos"},{"n": 9,"nombre": "What, So What, Now What (Qué, Y eso qué, Ahora qué — W³)","archivo": "09-what-so-what-now-what.md","fuente": "Liberating Structures","tipo": "análisis conjunto de una experiencia y decisión de siguientes pasos","proposito": ["analizar o cerrar una sesión","pasar a la acción"],"fase": ["convergente","cierre"],"grupoMin": null,"grupoMax": null,"minutosMin": 45,"minutosMax": 45,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Permite a un grupo mirar juntos una experiencia compartida — un evento, un dato, un conflicto, un semestre — separando hechos, interpretaciones y acciones.","tiempoTexto": "~45 min","grupoTexto": "cualquiera"},{"n": 10,"nombre": "Discovery & Action Dialogue (Diálogo de descubrimiento y acción)","archivo": "10-discovery-action-dialogue.md","fuente": "Liberating Structures","tipo": "descubrir desviación positiva y soluciones locales","proposito": ["descubrir lo que ya funciona"],"fase": ["divergente"],"grupoMin": 5,"grupoMax": 15,"minutosMin": 25,"minutosMax": 70,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Descubre, en el lugar mismo donde ocurre el problema, las prácticas de quienes ya lo resuelven contra todo pronóstico (desviación positiva), y convierte ese descubrimiento en acción inmediata.","tiempoTexto": "25–70 min","grupoTexto": "5–15, en su propio entorno"},{"n": 11,"nombre": "Shift & Share (Rotar y compartir)","archivo": "11-shift-and-share.md","fuente": "Liberating Structures","tipo": "difundir innovaciones internas sin ponencias","proposito": ["difundir innovaciones internas"],"fase": ["divergente"],"grupoMin": 24,"grupoMax": 200,"minutosMin": 90,"minutosMax": 90,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Sustituye las presentaciones plenarias largas por estaciones simultáneas donde innovadores locales muestran su trabajo a grupos pequeños que rotan.","tiempoTexto": "~90 min","grupoTexto": "24–200"},{"n": 12,"nombre": "25/10 Crowdsourcing (Cosecha colectiva de ideas audaces)","archivo": "12-25-10-crowdsourcing.md","fuente": "Liberating Structures","tipo": "generar y priorizar ideas audaces con todo el grupo","proposito": ["abrir ideas de todas las voces","priorizar"],"fase": ["divergente","convergente"],"grupoMin": 12,"grupoMax": null,"minutosMin": 30,"minutosMax": 30,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Genera y jerarquiza en media hora las ideas más audaces de un grupo grande, con un método anónimo, energizante y a prueba de cabildeos. El resultado son las 10 ideas mejor puntuadas por inteligencia colectiva, listas para actuar.","tiempoTexto": "~30 min","grupoTexto": "desde 12 hasta cientos"},{"n": 13,"nombre": "Wise Crowds (Multitudes sabias)","archivo": "13-wise-crowds.md","fuente": "Liberating Structures","tipo": "consultoría entre pares","proposito": ["ayuda entre pares"],"fase": ["gemido","convergente"],"grupoMin": 4,"grupoMax": null,"minutosMin": 15,"minutosMax": 15,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Versión ampliada de la consultoría entre pares: una persona \"cliente\" recibe la ayuda concentrada de un grupo de consultores. Desarrolla simultáneamente la habilidad de pedir ayuda, escuchar sin defenderse y dar consejo útil.","tiempoTexto": "~15 min por consulta","grupoTexto": "4–5 por célula, escalable a cientos"},{"n": 14,"nombre": "Min Specs (Especificaciones mínimas)","archivo": "14-min-specs.md","fuente": "Liberating Structures","tipo": "definir reglas mínimas indispensables","proposito": ["priorizar"],"fase": ["convergente"],"grupoMin": 4,"grupoMax": null,"minutosMin": 35,"minutosMax": 50,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Destila la lista mínima de requisitos absolutos — qué se debe hacer y qué está prohibido — para lograr un propósito, eliminando la maraña de reglas que sofocan la iniciativa.","tiempoTexto": "35–50 min","grupoTexto": "cualquiera, en grupos de 4–7"},{"n": 15,"nombre": "Improv Prototyping (Prototipado teatral)","archivo": "15-improv-prototyping.md","fuente": "Liberating Structures","tipo": "ensayar y mejorar soluciones actuándolas","proposito": ["difundir innovaciones internas"],"fase": ["divergente"],"grupoMin": 8,"grupoMax": null,"minutosMin": 20,"minutosMax": 90,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Desarrolla soluciones a retos cotidianos actuándolas: un grupo dramatiza una escena problemática típica, el resto observa, y en rondas sucesivas se improvisan versiones mejoradas.","tiempoTexto": "20–90 min","grupoTexto": "8+"},{"n": 16,"nombre": "Helping Heuristics (Heurísticas de ayuda)","archivo": "16-helping-heuristics.md","fuente": "Liberating Structures","tipo": "practicar cómo ayudar sin invadir","proposito": ["ayuda entre pares"],"fase": ["divergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 15,"minutosMax": 15,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Entrena en miniatura cuatro maneras progresivas de ayudar — presencia silenciosa, descubrimiento guiado, provocación amorosa y atención al proceso — para que cada quien note sus patrones al pedir y ofrecer ayuda.","tiempoTexto": "~15 min","grupoTexto": "cualquiera, en pares"},{"n": 17,"nombre": "Conversation Café (Café de conversación)","archivo": "17-conversation-cafe.md","fuente": "Liberating Structures","tipo": "conversación profunda sobre temas difíciles, sin debate","proposito": ["conversación profunda sin debate"],"fase": ["gemido"],"grupoMin": 5,"grupoMax": null,"minutosMin": 35,"minutosMax": 60,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Crea las condiciones para entender juntos un tema espinoso o doloroso — escuchando y siendo escuchados — sin que se convierta en debate.","tiempoTexto": "35–60 min","grupoTexto": "5–7 por mesa, escalable"},{"n": 18,"nombre": "User Experience Fishbowl (Pecera de experiencia)","archivo": "18-user-experience-fishbowl.md","fuente": "Liberating Structures","tipo": "compartir experiencia directa de primera mano","proposito": ["difundir innovaciones internas"],"fase": ["divergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 35,"minutosMax": 70,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Un pequeño grupo con experiencia directa de algo conversa entre sí \"en la pecera\", mientras el resto escucha desde fuera y luego pregunta.","tiempoTexto": "35–70 min","grupoTexto": "cualquiera"},{"n": 19,"nombre": "Heard, Seen, Respected (Escuchado, visto, respetado — HSR)","archivo": "19-heard-seen-respected.md","fuente": "Liberating Structures","tipo": "practicar escucha empática y construir confianza","proposito": ["conectar al arrancar","duelo o transición difícil"],"fase": ["gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 35,"minutosMax": 35,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Practica la escucha sin arreglar ni juzgar: cada quien narra una experiencia de no haber sido escuchado, visto o respetado, y descubre lo que se siente al recibir atención plena.","tiempoTexto": "~35 min","grupoTexto": "cualquiera, en pares"},{"n": 20,"nombre": "Drawing Together (Dibujar juntos)","archivo": "20-drawing-together.md","fuente": "Liberating Structures","tipo": "revelar ideas y emociones por vía no verbal","proposito": ["conversación profunda sin debate"],"fase": ["divergente","gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 40,"minutosMax": 40,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Da acceso a intuiciones y sentimientos que las palabras bloquean: cada quien dibuja la historia de un reto y su transformación usando solo cinco símbolos, sin texto.","tiempoTexto": "~40 min","grupoTexto": "cualquiera"},{"n": 21,"nombre": "Design Storyboards (Guion gráfico de diseño)","archivo": "21-design-storyboards.md","fuente": "Liberating Structures","tipo": "diseñar reuniones antes de tenerlas","proposito": ["diseñar la propia reunión"],"fase": ["convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 25,"minutosMax": 70,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Es la meta-estructura: planear una reunión o evento cuadro por cuadro, como guion gráfico, especificando para cada segmento su propósito, la estructura elegida, tiempos, responsables y materiales.","tiempoTexto": "25–70 min","grupoTexto": "equipo organizador"},{"n": 22,"nombre": "Celebrity Interview (Entrevista a la celebridad)","archivo": "22-celebrity-interview.md","fuente": "Liberating Structures","tipo": "conectar a la audiencia con expertos o autoridades","proposito": ["difundir innovaciones internas"],"fase": ["divergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 35,"minutosMax": 60,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Reemplaza la ponencia del invitado especial por una entrevista tipo programa de televisión: una persona entrevistadora hace las preguntas que la audiencia querría hacer, y luego la audiencia misma genera preguntas en grupos.","tiempoTexto": "35–60 min","grupoTexto": "cualquiera, incluso cientos"},{"n": 23,"nombre": "Social Network Webbing (Tejido de redes sociales)","archivo": "23-social-network-webbing.md","fuente": "Liberating Structures","tipo": "mapear y expandir la red de aliados","proposito": ["coordinarse entre áreas o actores","mapear actores"],"fase": ["divergente","convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 60,"minutosMax": 60,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Hace visible la red informal de relaciones alrededor de un propósito y revela cómo expandirla sin presupuesto ni permiso: quién ya está, quién falta, quién conoce a quién.","tiempoTexto": "~60 min","grupoTexto": "cualquiera"},{"n": 24,"nombre": "What I Need From You (Lo que necesito de ti — WINFY)","archivo": "24-what-i-need-from-you.md","fuente": "Liberating Structures","tipo": "coordinación franca entre áreas o actores","proposito": ["coordinarse entre áreas o actores"],"fase": ["convergente"],"grupoMin": 2,"grupoMax": 7,"minutosMin": 55,"minutosMax": 70,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Destapa y ordena las necesidades mutuas entre grupos que dependen unos de otros (áreas, comités, instituciones), sustituyendo quejas de pasillo por peticiones claras y respuestas inequívocas.","tiempoTexto": "55–70 min","grupoTexto": "2 a 7 grupos funcionales"},{"n": 25,"nombre": "Options Place / Open Space (Plaza de opciones)","archivo": "25-options-place.md","fuente": "Liberating Structures","tipo": "agenda creada por los propios participantes","proposito": ["agenda construida por los participantes"],"fase": ["divergente"],"grupoMin": 10,"grupoMax": null,"minutosMin": 90,"minutosMax": null,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Cuando el tema importa y es complejo, deja que los participantes construyan la agenda: cualquiera propone una sesión sobre lo que le apasiona y se hace responsable de ella; la gente vota con los pies.","tiempoTexto": "90 min a varios días","grupoTexto": "10 a 1000+"},{"n": 26,"nombre": "Generative Relationships STAR (Estrella de relaciones generativas)","archivo": "26-generative-relationships-star.md","fuente": "Liberating Structures","tipo": "diagnóstico del funcionamiento del equipo","proposito": ["nombrar tensiones y paradojas"],"fase": ["gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 25,"minutosMax": 60,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Permite a un equipo diagnosticar juntos la calidad de sus relaciones de trabajo sobre cuatro dimensiones — la estrella STAR — y decidir cómo mejorarlas: Separación (diversidad de perspectivas), Afinación (escucha y entendimiento…","tiempoTexto": "25–60 min","grupoTexto": "equipos de trabajo"},{"n": 27,"nombre": "Agreement & Certainty Matrix (Matriz de acuerdo y certeza)","archivo": "27-agreement-certainty.md","fuente": "Liberating Structures","tipo": "clasificar retos para elegir el enfoque correcto","proposito": ["nombrar tensiones y paradojas","priorizar"],"fase": ["convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 45,"minutosMax": 45,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Evita el error más caro de la gestión: tratar problemas complejos como si fueran simples (o al revés).","tiempoTexto": "~45 min","grupoTexto": "cualquiera"},{"n": 28,"nombre": "Simple Ethnography (Etnografía simple)","archivo": "28-simple-ethnography.md","fuente": "Liberating Structures","tipo": "entender observando en el terreno","proposito": ["descubrir lo que ya funciona"],"fase": ["divergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 75,"minutosMax": 75,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Sustituye las suposiciones de escritorio por observación directa y silenciosa de las personas en su entorno real: qué hacen (no qué dicen que hacen), con quién, con qué obstáculos y con qué soluciones improvisadas.","tiempoTexto": "75 min a un día","grupoTexto": "observadores en campo"},{"n": 29,"nombre": "Integrated~Autonomy (Integración~Autonomía)","archivo": "29-integrated-autonomy.md","fuente": "Liberating Structures","tipo": "resolver tensiones entre estandarizar y dar libertad","proposito": ["nombrar tensiones y paradojas"],"fase": ["gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 60,"minutosMax": 80,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Aborda la tensión permanente entre integrarse (estandarizar, coordinar, uniformar) y ser autónomos (adaptar, personalizar, decidir localmente), buscando acciones que fortalezcan ambos polos a la vez en lugar de sacrificar uno.","tiempoTexto": "60–80 min","grupoTexto": "cualquiera"},{"n": 30,"nombre": "Critical Uncertainties (Incertidumbres críticas)","archivo": "30-critical-uncertainties.md","fuente": "Liberating Structures","tipo": "estrategia mediante escenarios","proposito": ["estrategia ante incertidumbre"],"fase": ["convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 60,"minutosMax": 100,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Prepara al grupo para futuros que no controla: identifica las dos incertidumbres más críticas de su entorno, construye con ellas cuatro escenarios y desarrolla estrategias para cada uno, distinguiendo las robustas (sirven…","tiempoTexto": "60–100 min","grupoTexto": "cualquiera"},{"n": 31,"nombre": "Ecocycle Planning (Planeación por ecociclo)","archivo": "31-ecocycle-planning.md","fuente": "Liberating Structures","tipo": "mapear la cartera de actividades y liberar recursos","proposito": ["dejar de hacer lo contraproducente","estrategia ante incertidumbre"],"fase": ["convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 60,"minutosMax": 95,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Analiza todas las actividades de un grupo sobre el mapa del ecociclo — nacimiento, madurez, destrucción creativa y renovación — para ver de un vistazo qué está creciendo, qué está maduro, qué debe morir para liberar recursos…","tiempoTexto": "60–95 min","grupoTexto": "cualquiera"},{"n": 32,"nombre": "Panarchy (Panarquía)","archivo": "32-panarchy.md","fuente": "Liberating Structures","tipo": "entender y mover el cambio entre escalas del sistema","proposito": ["estrategia ante incertidumbre"],"fase": ["gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 95,"minutosMax": 120,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Ayuda a ver cómo los sistemas en que se está inmerso — persona, equipo, organización, comunidad, política pública — son ecociclos apilados que se influyen entre sí, y a encontrar en qué nivel están las palancas y los bloqueos…","tiempoTexto": "95–120 min","grupoTexto": "cualquiera"},{"n": 33,"nombre": "Purpose-to-Practice (Del propósito a la práctica — P2P)","archivo": "33-purpose-to-practice.md","fuente": "Liberating Structures","tipo": "diseñar los cimientos de una iniciativa","proposito": ["aclarar el propósito","estrategia ante incertidumbre"],"fase": ["convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 25,"minutosMax": 240,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Diseña participativamente los cinco elementos esenciales de una iniciativa nueva — propósito, principios, participantes, estructura y prácticas — de modo que quienes la echarán a andar sean quienes la definan.","tiempoTexto": "25 min (borrador) a medio día","grupoTexto": "cualquiera"},{"n": 34,"nombre": "Mad Tea | Calm Tea (Té agitado | Té sereno)","archivo": "34-mad-tea-calm-tea.md","fuente": "Liberating Structures","tipo": "apertura o cierre energizante; frases incompletas a alta velocidad","proposito": ["abrir ideas de todas las voces","conectar al arrancar"],"fase": ["divergente"],"grupoMin": 10,"grupoMax": null,"minutosMin": 20,"minutosMax": 20,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Todo el grupo completa rápidamente frases abiertas sobre un reto compartido, provocando reflexiones honestas, risas y perspectivas cruzadas en minutos.","tiempoTexto": "~20 min","grupoTexto": "10–50+"},{"n": 35,"nombre": "Spiral Journal (Diario en espiral)","archivo": "35-spiral-journal.md","fuente": "Liberating Structures","tipo": "reflexión individual serena antes o después del trabajo grupal","proposito": ["analizar o cerrar una sesión"],"fase": ["convergente","cierre"],"grupoMin": null,"grupoMax": null,"minutosMin": 15,"minutosMax": 15,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Ofrece un espacio tranquilo de escritura individual para aterrizar pensamientos antes de conversar: el trazo lento de una espiral aquieta la mente y cuatro consignas abiertas enfocan la reflexión.","tiempoTexto": "~15 min","grupoTexto": "cualquiera"},{"n": 36,"nombre": "Folding Spectrogram (Espectro plegable)","archivo": "36-folding-spectrogram.md","fuente": "Liberating Structures","tipo": "visibilizar posturas y dialogar entre extremos","proposito": ["conversación profunda sin debate"],"fase": ["gemido"],"grupoMin": 8,"grupoMax": 60,"minutosMin": 20,"minutosMax": 45,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Hace físicamente visible la distribución de opiniones del grupo: ante una afirmación, cada quien se ubica en una línea según su postura; luego la línea \"se pliega\" para emparejar a las personas con visiones más divergentes…","tiempoTexto": "20–45 min","grupoTexto": "8–60"},{"n": 37,"nombre": "Positive Gossip (Chisme positivo)","archivo": "37-positive-gossip.md","fuente": "Liberating Structures","tipo": "cultivar aprecio y clima de confianza","proposito": ["conectar al arrancar"],"fase": ["divergente"],"grupoMin": 8,"grupoMax": null,"minutosMin": 15,"minutosMax": 15,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Convierte el ciclo vicioso del chisme negativo — ese malestar que se contagia de persona a persona y sofoca la iniciativa — en un ciclo virtuoso de retroalimentación apreciativa.","tiempoTexto": "~15 min","grupoTexto": "8+"},{"n": 38,"nombre": "Principles Walk-Around (Caminata de principios)","archivo": "38-principles-walkaround.md","fuente": "Liberating Structures","tipo": "hacer tangibles los principios de trabajo del grupo","proposito": ["aclarar el propósito"],"fase": ["convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 30,"minutosMax": 45,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Convierte los principios rectores — esos que suelen vivir enmarcados y muertos en la pared — en objeto de reflexión activa: colocados por el espacio, el grupo camina, los anota, los discute y evalúa si de verdad guían su…","tiempoTexto": "30–45 min","grupoTexto": "cualquiera"},{"n": 39,"nombre": "Network Relationship Patterns (Patrones de relación en red)","archivo": "39-network-relationship-patterns.md","fuente": "Liberating Structures","tipo": "hacer visibles los patrones invisibles de trabajo conjunto","proposito": ["coordinarse entre áreas o actores"],"fase": ["divergente","gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 60,"minutosMax": 60,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Ayuda a un grupo a identificar cómo describe su trabajo y cómo se relaciona internamente y con otros: qué patrones de vínculo (jerárquicos, radiales, en malla, fragmentados) están operando de facto, cuáles sirven al propósito…","tiempoTexto": "~60 min","grupoTexto": "equipos y redes"},{"n": 40,"nombre": "Grief Walking (Caminar el duelo)","archivo": "40-grief-walking.md","fuente": "Liberating Structures","tipo": "acompañar pérdidas y transiciones profundas","proposito": ["duelo o transición difícil"],"fase": ["gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 45,"minutosMax": 60,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Abre un espacio seguro para que las personas procesen juntas una pérdida o transición profunda — un fallecimiento, el fin de un proyecto o una era, un desastre — mediante escritura, palabra y caminata acompañada.","tiempoTexto": "45–60 min","grupoTexto": "hasta 15–20 por subgrupo"},{"n": 41,"nombre": "Future~Present (Futuro~Presente)","archivo": "41-future-present.md","fuente": "Liberating Structures","tipo": "imaginar el futuro logrado para descubrir tácticas presentes","proposito": ["estrategia ante incertidumbre","visión de futuro"],"fase": ["convergente"],"grupoMin": 4,"grupoMax": null,"minutosMin": 25,"minutosMax": 25,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Distorsiona positivamente el tiempo: los participantes se imaginan mirando hacia atrás desde un futuro de quince a treinta años en que las metas ya se lograron, y cuentan — como ancianos ante una fogata — cómo lo consiguieron.","tiempoTexto": "~25 min","grupoTexto": "cualquiera, en grupos de 4–5"},{"n": 42,"nombre": "Talking with Pixies (Hablar con los duendes)","archivo": "42-talking-with-pixies.md","fuente": "Liberating Structures","tipo": "destrabar decisiones dándole voz a las voces internas","proposito": ["nombrar tensiones y paradojas"],"fase": ["gemido"],"grupoMin": null,"grupoMax": null,"minutosMin": 30,"minutosMax": 30,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Ayuda a una persona en una encrucijada: comparte su dilema y escucha a los \"duendes\" — compañeros que juegan a ser las voces internas, traviesas y sin filtro, que todos cargamos en los hombros — expresar en voz alta miedos…","tiempoTexto": "~30 min","grupoTexto": "grupos pequeños"},{"n": 43,"nombre": "Strategy Knotworking (Anudando estrategia — SKW)","archivo": "43-strategy-knotworking.md","fuente": "Liberating Structures","tipo": "proceso estratégico completo tejido con estructuras","proposito": ["estrategia ante incertidumbre"],"fase": ["convergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 240,"minutosMax": null,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Es la macro-estructura de estrategia: el grupo responde seis preguntas estratégicas encadenadas, trabajando cada una con la estructura liberadora más apta, de modo que la inteligencia de todo el grupo — no la de un comité…","tiempoTexto": "medio día a varias sesiones","grupoTexto": "cualquiera"},{"n": 44,"nombre": "Brindis con historia (15 Toasts)","archivo": null,"fuente": "Parker","tipo": "abrir autenticidad y confianza en grupos formales","proposito": ["conectar al arrancar"],"fase": ["divergente"],"grupoMin": 8,"grupoMax": 16,"minutosMin": 60,"minutosMax": 90,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Convierte una comida o el arranque de un proceso en un espacio donde la gente deja el discurso ensayado y comparte experiencia propia.","tiempoTexto": "60–90 min","grupoTexto": "8–16 (ideal ~15)"},{"n": 45,"nombre": "Cuaderno previo (workbook de preparación)","archivo": null,"fuente": "Parker","tipo": "priming — preparar personas antes del encuentro","proposito": ["conectar al arrancar"],"fase": ["divergente"],"grupoMin": null,"grupoMax": null,"minutosMin": 15,"minutosMax": 30,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Hace que la gente llegue ya pensando, ya conectada con el propósito y ya habiendo dicho su verdad — antes de entrar al salón.","tiempoTexto": "15–30 min por persona, días antes","grupoTexto": "cualquier tamaño"},{"n": 46,"nombre": "Presentaciones cruzadas (honrar y fusionar)","archivo": null,"fuente": "Parker","tipo": "apertura — convertir asistentes en grupo","proposito": ["conectar al arrancar"],"fase": ["divergente"],"grupoMin": 8,"grupoMax": 70,"minutosMin": 1,"minutosMax": 2,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Sustituye la ronda sosa de \"nombre y de dónde vienes\" por presentaciones que honran: alguien más te presenta, con detalles curiosos y personales, no con tu puesto.","tiempoTexto": "1–2 min por persona","grupoTexto": "8–70"},{"n": 47,"nombre": "Combate ritual de posturas (cage match)","archivo": null,"fuente": "Parker","tipo": "buena controversia — litigar una decisión que el grupo evita","proposito": ["nombrar tensiones y paradojas"],"fase": ["gemido"],"grupoMin": 8,"grupoMax": 40,"minutosMin": 45,"minutosMax": 60,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Cuando un grupo educado le saca la vuelta a la decisión que más le importa, esta estructura vuelve el conflicto explícito y jugable: dos voceros encarnan las dos posturas y las defienden en rondas, con público obligado a tomar…","tiempoTexto": "45–60 min","grupoTexto": "8–40"},{"n": 48,"nombre": "Mapa de calor y reglas base","archivo": null,"fuente": "Parker","tipo": "preparar y abrir una conversación difícil","proposito": ["conflicto profundo"],"fase": ["gemido"],"grupoMin": 6,"grupoMax": 25,"minutosMin": 30,"minutosMax": null,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Para grupos con conflicto latente que nadie nombra: mapear antes dónde está el calor (lo que se evita, las vacas sagradas, lo que se dice en corto pero no en plenaria) y abrir la sesión nombrándolo con cuidado, bajo reglas…","tiempoTexto": "entrevistas previas + 30–45 min al abrir la sesión","grupoTexto": "6–25"},{"n": 49,"nombre": "Cierre en dos tiempos","archivo": null,"fuente": "Parker","tipo": "cierre — terminar de verdad, no desvanecerse","proposito": ["analizar o cerrar una sesión"],"fase": ["cierre"],"grupoMin": null,"grupoMax": null,"minutosMin": 15,"minutosMax": 30,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "La mayoría de las reuniones no terminan: se apagan cuando se acaba el tiempo. Este formato diseña el final con la misma intención que la apertura: una última llamada que anuncia el cierre, un tiempo para mirar hacia adentro (qué…","tiempoTexto": "15–30 min finales","grupoTexto": "cualquier tamaño"},{"n": 50,"nombre": "Lluvia silenciosa y mapa de afinidad (Post-Up + Affinity Map)","archivo": null,"fuente": "Gamestorming","tipo": "generar ideas y encontrar patrones","proposito": ["abrir ideas de todas las voces"],"fase": ["divergente","convergente"],"grupoMin": 4,"grupoMax": 20,"minutosMin": 30,"minutosMax": 90,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "La pareja de trabajo más básica del banco: generar muchas ideas en silencio (cada una en su postit) y luego agruparlas por parentesco hasta que emerjan las categorías del propio grupo.","tiempoTexto": "30–90 min","grupoTexto": "4–20 (Post-Up solo: hasta 50)"},{"n": 51,"nombre": "Votación con puntos (Dot Voting)","archivo": null,"fuente": "Gamestorming","tipo": "cierre — priorizar entre muchas opciones","proposito": ["priorizar"],"fase": ["convergente"],"grupoMin": 3,"grupoMax": null,"minutosMin": 10,"minutosMax": 20,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "La forma más simple y transparente de que un grupo priorice: cada persona recibe un número fijo de puntos (estampitas, marcas de plumón, frijoles, piedritas) y los reparte entre las opciones que más le importan.","tiempoTexto": "10–20 min","grupoTexto": "3–100+"},{"n": 52,"nombre": "Matriz impacto-esfuerzo (+ quién/qué/cuándo)","archivo": null,"fuente": "Gamestorming","tipo": "cierre — de las ideas a las acciones comprometidas","proposito": ["pasar a la acción","planear con responsables"],"fase": ["convergente","cierre"],"grupoMin": 3,"grupoMax": 30,"minutosMin": 30,"minutosMax": 60,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Dos movimientos de cierre encadenados. Primero, mapear las acciones posibles en un cuadrante de dos ejes — impacto (qué tanto acerca a la meta) por esfuerzo (qué cuesta hacerla) — para ver de golpe cuáles son las joyas (mucho…","tiempoTexto": "30–60 min","grupoTexto": "3–30"},{"n": 53,"nombre": "Portada del futuro (Cover Story)","archivo": null,"fuente": "Gamestorming","tipo": "visión — imaginar el futuro ideal ya cumplido","proposito": ["visión de futuro"],"fase": ["divergente"],"grupoMin": 4,"grupoMax": null,"minutosMin": 60,"minutosMax": 90,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Ejercicio de visión pura: el grupo imagina que su sueño más grande YA ocurrió y fue tan notable que una revista (o el periódico regional, o el noticiero) le dedicó la portada.","tiempoTexto": "60–90 min","grupoTexto": "cualquiera, en equipos de 4–6"},{"n": 54,"nombre": "Lancha y anclas (Speedboat)","archivo": null,"fuente": "Gamestorming","tipo": "diagnóstico suave de obstáculos","proposito": ["nombrar tensiones y paradojas"],"fase": ["divergente","gemido"],"grupoMin": 5,"grupoMax": null,"minutosMin": 30,"minutosMax": 30,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Nombrar sin drama lo que detiene un proyecto, servicio o meta. Se dibuja una lancha (el proyecto) con anclas colgando (los obstáculos) y el grupo escribe qué es cada ancla.","tiempoTexto": "30 min","grupoTexto": "5–10 (escalable en equipos)"},{"n": 55,"nombre": "Pre-mortem","archivo": null,"fuente": "Gamestorming","tipo": "riesgo — aprender del fracaso antes de que ocurra","proposito": ["ver riesgos"],"fase": ["convergente"],"grupoMin": 3,"grupoMax": 12,"minutosMin": 20,"minutosMax": 45,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "En los proyectos el aprendizaje suele llegar al final, en la autopsia de lo que salió mal — cuando ya no sirve. El pre-mortem voltea el orden: al arrancar, el equipo imagina que el proyecto YA fracasó y cuenta por qué.","tiempoTexto": "20–45 min (5 min por persona)","grupoTexto": "equipos chicos (3–12)"},{"n": 56,"nombre": "Mapa de actores (Stakeholder Analysis)","archivo": null,"fuente": "Gamestorming","tipo": "preparación — quién importa y cómo involucrarlo","proposito": ["mapear actores"],"fase": ["divergente","convergente"],"grupoMin": 3,"grupoMax": 12,"minutosMin": 30,"minutosMax": 60,"requiereEscritura": true,"requiereMovimiento": false,"paraQueSirve": "Antes de arrancar cualquier proyecto que toque a muchos, mapear a los actores en un cuadrante de poder (cuánto puede empujar o bloquear) por interés (cuánto le afecta) y derivar una estrategia de involucramiento para cada zona.","tiempoTexto": "30–60 min","grupoTexto": "el núcleo del proyecto (3–12)"},{"n": 57,"nombre": "Café del mundo (The World Café)","archivo": null,"fuente": "Gamestorming","tipo": "conversación profunda en grupos grandes con polinización cruzada","proposito": ["conversación profunda sin debate"],"fase": ["divergente","gemido"],"grupoMin": 12,"grupoMax": null,"minutosMin": 90,"minutosMax": 90,"requiereEscritura": true,"requiereMovimiento": true,"paraQueSirve": "Convierte una reunión grande en una red de conversaciones de café: mesas pequeñas que discuten \"preguntas que importan\" en rondas, con gente que viaja de mesa en mesa llevando ideas consigo.","tiempoTexto": "90 min","grupoTexto": "12–100+ (mesas de 4–5)"},{"n": 58,"nombre": "Escala de grados de acuerdo (Gradients of Agreement)","archivo": null,"fuente": "Kaner","tipo": "cierre — medir el apoyo real antes de declarar el acuerdo","proposito": ["medir el acuerdo"],"fase": ["convergente","cierre"],"grupoMin": 4,"grupoMax": 60,"minutosMin": 15,"minutosMax": 40,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "El \"sí\" y el \"no\" esconden multitudes: hay síes entusiastas y síes de \"no quiero estorbar\". Esta escala deja que cada quien registre su grado real de apoyo a una propuesta sin miedo a que se lea como veto, y le muestra al grupo…","tiempoTexto": "15–40 min por propuesta","grupoTexto": "4–60"},{"n": 59,"nombre": "Conversación enfocada (ORID)","archivo": null,"fuente": "ORID / ICA","tipo": "procesar una experiencia y llegar a conclusiones propias","proposito": ["analizar o cerrar una sesión"],"fase": ["convergente","cierre"],"grupoMin": 1,"grupoMax": 40,"minutosMin": 15,"minutosMax": 60,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Guiar a un grupo por los cuatro niveles del pensamiento natural — datos, reacciones, significado, decisión — mediante preguntas abiertas en ese orden.","tiempoTexto": "15–60 min","grupoTexto": "1 a 40 (también sirve uno a uno y para pensar solo)"},{"n": 60,"nombre": "Proceso grupal de voces (foro abierto estilo Mindell)","archivo": null,"fuente": "Mindell","tipo": "conflicto profundo — dar cuerpo a las polaridades del grupo","proposito": ["conflicto profundo"],"fase": ["gemido"],"grupoMin": 10,"grupoMax": null,"minutosMin": 60,"minutosMax": 120,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Cuando un tema divide de verdad a un grupo, en vez de moderar un debate de personas se abre un espacio donde hablan los ROLES: las posturas se nombran como voces del campo (\"la voz que quiere la presa\", \"la voz que defiende…","tiempoTexto": "60–120 min","grupoTexto": "10–100+"},{"n": 61,"nombre": "Las seis conversaciones (Block)","archivo": null,"fuente": "Block","tipo": "construir pertenencia y responsabilidad comunitaria","proposito": ["construir pertenencia"],"fase": ["divergente","gemido"],"grupoMin": 3,"grupoMax": null,"minutosMin": 30,"minutosMax": null,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Seis conversaciones que convierten a asistentes en dueños de su comunidad: invitación, posibilidad, propiedad, disenso, compromiso y dones.","tiempoTexto": "de 30 min (una conversación) a un proceso de meses","grupoTexto": "3–12 por círculo, escalable en salas grandes"},{"n": 62,"nombre": "Mediación interdependiente (entre dos o pocas personas)","archivo": null,"fuente": "adrienne maree brown","tipo": "conflicto interpersonal dentro de un colectivo","proposito": ["conflicto entre personas"],"fase": ["gemido"],"grupoMin": 2,"grupoMax": 6,"minutosMin": 90,"minutosMax": null,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Acompañar a dos personas (o un grupito) cuando el conflicto ya impide que se escuchen directamente y el vínculo importa: en un colectivo, un comité, un equipo de trabajo, una familia organizada alrededor de un proyecto.","tiempoTexto": "90 min a varias sesiones","grupoTexto": "2–6 personas + facilitador (idealmente dos)"},{"n": 63,"nombre": "Equipos de cuidado por elementos (Care Bears)","archivo": null,"fuente": "adrienne maree brown","tipo": "cuidado colectivo del espacio en encuentros largos","proposito": ["cuidado del grupo"],"fase": ["divergente","gemido","convergente","cierre"],"grupoMin": 12,"grupoMax": null,"minutosMin": 10,"minutosMax": null,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "En talleres, encuentros o inmersiones de más de un día, el cuidado del espacio suele caer en los organizadores (o en las mujeres, por default) y termina desgastando a quien facilita.","tiempoTexto": "10 min para organizarlos; operan todo el evento","grupoTexto": "12–60+"},{"n": 64,"nombre": "Mapas parlantes (mapa social, de recursos y de servicios)","archivo": null,"fuente": "Geilfus / DRP","tipo": "diagnóstico visual del territorio y de la comunidad","proposito": ["diagnóstico del territorio"],"fase": ["divergente"],"grupoMin": 8,"grupoMax": null,"minutosMin": 60,"minutosMax": 180,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "El punto de partida de casi cualquier proceso territorial: la gente dibuja su propio territorio y en el dibujo aparece lo que ninguna encuesta obtiene.","tiempoTexto": "1–3 h por mapa","grupoTexto": "8–10 por mapa (varios grupos en paralelo)"},{"n": 65,"nombre": "Caminata y diagrama de corte (transecto)","archivo": null,"fuente": "Geilfus / DRP","tipo": "diagnóstico en el terreno, caminando","proposito": ["diagnóstico del territorio"],"fase": ["divergente"],"grupoMin": 3,"grupoMax": 5,"minutosMin": 120,"minutosMax": null,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Sacar el diagnóstico del salón: se camina el territorio atravesando la mayor diversidad de terrenos y usos, y luego se representa lo caminado en un diagrama de corte — un perfil del terreno con una columna por zona (loma alta…","tiempoTexto": "medio día de recorrido + taller de máximo 2 h","grupoTexto": "3–5 caminantes (más el equipo)"},{"n": 66,"nombre": "Priorización por pares y árbol de problemas","archivo": null,"fuente": "Geilfus / DRP","tipo": "análisis — distinguir problemas de causas y ordenarlos por importancia","proposito": ["priorizar"],"fase": ["convergente"],"grupoMin": 8,"grupoMax": 30,"minutosMin": 60,"minutosMax": null,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Dos movimientos encadenados que resuelven el atasco clásico de las asambleas (\"todo es urgente\" o \"el problema es todo\").","tiempoTexto": "1 h (matriz) + 1–3 h (árbol, si se hace antes)","grupoTexto": "8–30"},{"n": 67,"nombre": "Soluciones locales primero (identificación y matriz de evaluación)","archivo": null,"fuente": "Geilfus / DRP","tipo": "análisis — de los problemas a las opciones, empezando por lo que la gente ya hace","proposito": ["descubrir lo que ya funciona"],"fase": ["divergente","convergente"],"grupoMin": 8,"grupoMax": 30,"minutosMin": 60,"minutosMax": null,"requiereEscritura": false,"requiereMovimiento": false,"paraQueSirve": "Antes de traer soluciones de fuera, encontrar y evaluar las que la comunidad YA ha probado. Da prioridad a lo local y deja lo introducido para cuando lo propio no existe o no alcanza.","tiempoTexto": "1–3 h en asamblea (+ días si hay trabajo de campo)","grupoTexto": "8–30"},{"n": 68,"nombre": "Mapa de ordenamiento, plan de acción y toma de responsabilidades","archivo": null,"fuente": "Geilfus / DRP","tipo": "planificación — del acuerdo al quién hace qué y cuándo","proposito": ["planear con responsables","pasar a la acción"],"fase": ["convergente","cierre"],"grupoMin": 10,"grupoMax": 40,"minutosMin": 120,"minutosMax": null,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "El cierre planificador de un proceso territorial, en tres piezas encadenadas. El mapa de ordenamiento dibuja el territorio como la comunidad quiere verlo (no el diagnóstico: la visión), con las acciones ubicadas y delimitadas…","tiempoTexto": "2–3 h el mapa; el plan, según complejidad","grupoTexto": "10–40"},{"n": 69,"nombre": "Calendarios estacionales y reloj de uso del tiempo (enfoque de género)","archivo": null,"fuente": "Geilfus / DRP","tipo": "diagnóstico temporal — estacionalidad y carga de trabajo","proposito": ["diagnóstico del territorio"],"fase": ["divergente","convergente"],"grupoMin": 6,"grupoMax": 15,"minutosMin": 60,"minutosMax": 120,"requiereEscritura": false,"requiereMovimiento": true,"paraQueSirve": "Dos herramientas que revelan lo que los mapas no ven: cuándo pasan las cosas y quién carga el trabajo.","tiempoTexto": "1–2 h por calendario","grupoTexto": "6–15 (por separado hombres y mujeres)"}];
+/* CATALOGO_FIN */
+let CATALOGO = (almacen.get("fac_catalogo", null) || CATALOGO_BASE).slice();
+
+/* ══════════════════════ guía por función ══════════════════════
+   Cada grupo corresponde a una etiqueta de propósito del catálogo.
+   ═══════════════════════════════════════════════════════════════════ */
+const GRUPOS_FUNCION = [
+  { tag: "conectar al arrancar", titulo: "Arrancar y conectar",
+    cuando: "El grupo no se conoce, llega frío o llega de la calle con la cabeza en otra parte. Sin esto, la primera media hora se va en calentar motores y las voces tímidas ya no vuelven.",
+    enClase: "En clase resuelve el problema del primer día y el de los equipos que siempre se juntan entre los mismos." },
+  { tag: "abrir ideas de todas las voces", titulo: "Abrir ideas con todas las voces",
+    cuando: "Hay pocas ideas, o las de siempre, o habla el mismo de siempre. Todas estas estructuras hacen que cada persona piense antes de que el grupo opine, que es lo que evita que la primera voz fije el rumbo.",
+    enClase: "1-2-4-Todos es la herramienta de trabajo diaria de una clase participativa: cabe en 15 minutos y sirve con cualquier pregunta." },
+  { tag: "aclarar el propósito", titulo: "Aclarar el propósito",
+    cuando: "Cuando el grupo se enreda porque nadie ha dicho para qué están ahí, o cuando dos personas creen que trabajan en lo mismo y no.",
+    enClase: "Útil al arrancar un proyecto de equipo o una salida de campo: qué queremos que exista al final." },
+  { tag: "descubrir lo que ya funciona", titulo: "Descubrir lo que ya funciona",
+    cuando: "Antes de traer soluciones de fuera. Casi siempre alguien del grupo ya resolvió el problema a su manera y nadie se ha enterado. Además cambia el ánimo: se habla desde lo que hay, no desde la carencia.",
+    enClase: "Buen antídoto contra la clase que solo diagnostica problemas." },
+  { tag: "conversación profunda sin debate", titulo: "Conversar hondo, sin debate",
+    cuando: "Tema espinoso, doloroso o polarizado, donde discutir empeora las cosas. Aquí no se busca ganar ni concluir: se busca entender qué trae cada quien antes de intentar decidir nada.",
+    enClase: "Para temas que tocan la vida de los estudiantes —el territorio, el trabajo, la migración— antes de pasar a lo analítico." },
+  { tag: "nombrar tensiones y paradojas", titulo: "Nombrar tensiones y paradojas",
+    cuando: "Cuando el problema no tiene un lado bueno y otro malo, sino dos cosas verdaderas que se estorban. Se sostienen, no se resuelven; y nombrarlas baja mucho la temperatura.",
+    enClase: "Sirve para que un grupo deje de buscar «la respuesta correcta» en un tema que no la tiene." },
+  { tag: "dejar de hacer lo contraproducente", titulo: "Dejar de hacer lo que estorba",
+    cuando: "El grupo está saturado y toda propuesta suma trabajo. Estas estructuras hacen espacio primero: qué dejamos de hacer.",
+    enClase: "TRIZ funciona muy bien con estudiantes: inventar el peor curso posible y luego reconocer qué ya hacemos de eso." },
+  { tag: "ayuda entre pares", titulo: "Ayuda entre pares",
+    cuando: "Cada quien trae un problema propio y no hay experto que resuelva todos. El grupo se vuelve consultor, por turnos y con reglas, que es la única forma de que la ayuda no se convierta en consejo no pedido.",
+    enClase: "Ideal para asesorías de proyecto, tesis o prácticas: en una hora, seis personas reciben ayuda real." },
+  { tag: "difundir innovaciones internas", titulo: "Difundir lo que alguien ya hace bien",
+    cuando: "Lo que funciona en un equipo no viaja a los demás, y mandarlo por circular no sirve. Estas estructuras lo hacen viajar por contacto.",
+    enClase: "Sustituyen la ronda de exposiciones de equipo, que aburre a todos menos al que expone." },
+  { tag: "coordinarse entre áreas o actores", titulo: "Coordinarse entre áreas o actores",
+    cuando: "Varias partes dependen entre sí y se reclaman en corto lo que no se piden de frente. Aquí cada quien pide en voz alta lo que necesita y recibe respuesta clara.",
+    enClase: "Para trabajos por equipos donde cada uno depende del entregable del otro." },
+  { tag: "mapear actores", titulo: "Mapear actores y aliados",
+    cuando: "Antes de arrancar algo que toca a muchos: quién puede empujarlo, quién puede detenerlo, a quién le afecta y todavía no está en la mesa.",
+    enClase: "Base de cualquier ejercicio de planeación territorial o de intervención comunitaria." },
+  { tag: "ver riesgos", titulo: "Ver riesgos antes de arrancar",
+    cuando: "El entusiasmo del arranque impide ver lo que puede salir mal. Imaginar el fracaso ya ocurrido destraba lo que nadie se atreve a decir de frente.",
+    enClase: "Buen paso antes de que los equipos se lancen a su proyecto de semestre." },
+  { tag: "visión de futuro", titulo: "Construir visión de futuro",
+    cuando: "El grupo sabe qué le duele pero no qué quiere. Ponerle imagen concreta al futuro deseado es lo que después permite planear.",
+    enClase: "Funciona con equipos que necesitan imaginar antes de aterrizar." },
+  { tag: "estrategia ante incertidumbre", titulo: "Estrategia cuando no se sabe qué va a pasar",
+    cuando: "Decisiones de largo plazo con variables fuera de control —lluvia, presupuesto, cambio de gobierno—. Se prepara para varios futuros, no para el que esperamos.",
+    enClase: "Para cursos de planeación o gestión, con casos reales de la región." },
+  { tag: "priorizar", titulo: "Priorizar entre muchas opciones",
+    cuando: "Hay más ideas que tiempo y todo parece urgente. Priorizar a mano alzada favorece al que habla más fuerte; estas estructuras no.",
+    enClase: "La votación con puntos toma diez minutos y evita la discusión eterna sobre qué tema toca primero." },
+  { tag: "medir el acuerdo", titulo: "Medir el acuerdo de verdad",
+    cuando: "Antes de declarar cerrado un acuerdo. El «sí» esconde multitudes: hay síes convencidos y síes de «no quiero estorbar», y esos últimos son los que después no se cumplen.",
+    enClase: "Sirve para acordar reglas del curso o criterios de evaluación con el grupo." },
+  { tag: "pasar a la acción", titulo: "Pasar a la acción",
+    cuando: "La sesión estuvo buena y no pasa nada después. Aquí cada quien encuentra qué puede hacer con lo que ya tiene, sin permiso de nadie.",
+    enClase: "Cierre honesto de un taller: qué voy a hacer distinto el lunes." },
+  { tag: "planear con responsables", titulo: "Planear con responsables y fechas",
+    cuando: "Cuando el acuerdo ya existe y falta convertirlo en quién hace qué, cuándo y con qué. Incluye la pregunta que evita el asistencialismo: qué podemos solos, qué con ayuda y qué le toca a otro.",
+    enClase: "Para proyectos de vinculación o servicio social." },
+  { tag: "analizar o cerrar una sesión", titulo: "Cerrar y evaluar",
+    cuando: "Terminar de verdad, no apagarse cuando se acaba el tiempo. Y leer juntos lo que pasó separando los hechos de las interpretaciones.",
+    enClase: "Cerrar con Qué / Y eso qué / Ahora qué te da la evaluación de la sesión sin pedir un formato aparte." },
+  { tag: "conflicto entre personas", titulo: "Conflicto entre personas",
+    cuando: "Dos personas o un grupito ya no se escuchan y el vínculo importa. No promete reconciliación: promete claridad sobre lo que es real y lo que es posible.",
+    enClase: "Para equipos rotos a mitad del semestre, o tutoría con dos partes." },
+  { tag: "conflicto profundo", titulo: "Conflicto profundo, con historia y poder desigual",
+    cuando: "Agravios viejos, rabia legítima, un «villano» señalado, temas indecibles. Aquí la técnica es lo de menos: se lee primero el fundamento de Mindell, se gradúa el conflicto y se entra acompañado.",
+    enClase: "Rara vez es un caso de clase; si aparece, no lo abras solo." },
+  { tag: "duelo o transición difícil", titulo: "Duelo, pérdida y transiciones",
+    cuando: "El grupo perdió algo —una persona, un proyecto, un lugar— y nadie lo ha nombrado. Se usa con tiempo suficiente y sin prisa por cerrar.",
+    enClase: "Puede tocar a un grupo tras una pérdida real; requiere cuidado, no técnica." },
+  { tag: "construir pertenencia", titulo: "Construir pertenencia y responsabilidad",
+    cuando: "Procesos comunitarios donde el riesgo es quedarse en el puro hablar: quejas, informes, historia. Convierte asistentes en dueños del asunto.",
+    enClase: "Para grupos que están formando algo propio: un colectivo, una brigada, un proyecto largo." },
+  { tag: "cuidado del grupo", titulo: "Cuidar al grupo en encuentros largos",
+    cuando: "Encuentros de un día o más. Sin esto, el cuidado cae en los organizadores —o en las mujeres, por default— y desgasta a quien facilita.",
+    enClase: "Para salidas de campo, campamentos y talleres de fin de semana." },
+  { tag: "agenda construida por los participantes", titulo: "Que el grupo ponga la agenda",
+    cuando: "Cuando no sabes tú qué hace falta discutir, o cuando imponer la agenda mataría la participación. Requiere soltar el control y aguantar el silencio inicial.",
+    enClase: "Para una sesión de repaso o de dudas, en vez de adivinar qué no se entendió." },
+  { tag: "diagnóstico del territorio", titulo: "Diagnóstico en campo y con el territorio",
+    cuando: "Trabajo rural y comunitario. No exigen leer ni escribir, se dibujan o se caminan, y los productos —mapas, papelones— se quedan con la gente. Con escolaridad diversa, casi siempre son la mejor opción.",
+    enClase: "Excelentes en clases de campo: el mapa parlante y el transecto enseñan a mirar el territorio con quien lo habita." },
+  { tag: "diseñar la propia reunión", titulo: "Diseñar la sesión misma",
+    cuando: "Cuando el diseño se hace con el grupo y no para el grupo. Es también el formato mental del guion de facilitación.",
+    enClase: "Sirve para que los estudiantes diseñen la sesión que van a facilitar ellos." }
+];
+
+/* ══════════════════════ perfiles de grupo ══════════════════════
+   Lo que pertenece al grupo y no a la sesión. Se guarda una vez y se
+   reusa; la sesión solo aporta propósito, fecha, tiempo y tensiones.
+   ═══════════════════════════════════════════════════════════════════ */
+const PERFIL = {
+  campos: ["f_contexto", "f_contextoOtro", "f_n", "f_quienes", "f_idioma", "f_autoridadTexto",
+           "f_duracion", "f_duracionOtra", "f_lugar", "f_lugarTexto", "f_restricciones",
+           "f_voces", "f_intentado", "f_noRepetir", "f_conocidas"],
+  radios: ["conocimiento", "escritura", "mobiliario"],
+  checksNombre: ["material"],
+  checksId: ["f_autoridad"]
+};
+const GRUPOS_SEMILLA = [
+  { nombre: "Asamblea ejidal (plantilla)", plantilla: true,
+    campos: { f_contexto: "Asamblea comunitaria", f_n: "40",
+      f_quienes: "Ejidatarias y ejidatarios, comisariado, avecindados; edades muy distintas",
+      f_idioma: "español, lenguaje llano, sin tecnicismos", f_autoridadTexto: "comisariado ejidal",
+      f_duracion: "120", f_lugar: "Casa ejidal",
+      f_restricciones: "La gente llega escalonada; hay que terminar antes de que caiga la tarde",
+      f_voces: "Las mujeres y los jóvenes hablan poco cuando está el comisariado" },
+    radios: { conocimiento: "Grupo con historia larga", escritura: "Mixto", mobiliario: "Parcialmente" },
+    checks: { "material|Papelones": true, "material|Plumones": true, "material|Cinta": true, "f_autoridad|on": true } },
+  { nombre: "Grupo de ahorro — Cosecha Colectiva (plantilla)", plantilla: true,
+    campos: { f_contexto: "Grupo de ahorro (Cosecha Colectiva)", f_n: "15",
+      f_quienes: "Mujeres y jóvenes del grupo autogestionado de ahorro",
+      f_idioma: "español, lenguaje llano; nada de jerga financiera", f_duracion: "120",
+      f_lugar: "Patio o explanada",
+      f_restricciones: "Varias llegan con niñas y niños; el transporte marca la hora de salida",
+      f_voces: "Las más jóvenes y las que entraron al grupo después" },
+    radios: { conocimiento: "Se conocen bien", escritura: "Mixto", mobiliario: "Sí" },
+    checks: { "material|Semillas, piedras u objetos": true, "material|Papelones": true, "material|Plumones": true } },
+  { nombre: "Comité o consejo (plantilla)", plantilla: true,
+    campos: { f_contexto: "Comité o consejo", f_n: "9",
+      f_quienes: "Integrantes del comité y su mesa directiva",
+      f_autoridadTexto: "quien preside el comité", f_duracion: "90", f_lugar: "Salón con mesas",
+      f_restricciones: "Se reúnen de noche, después de la jornada" },
+    radios: { conocimiento: "Se conocen bien", escritura: "Mixto", mobiliario: "Sí" },
+    checks: { "material|Papelones": true, "material|Plumones": true, "f_autoridad|on": true } },
+  { nombre: "Clase universitaria de 90 minutos (plantilla)", plantilla: true,
+    campos: { f_contexto: "Clase o taller universitario", f_n: "25",
+      f_quienes: "Estudiantes de licenciatura del mismo semestre",
+      f_idioma: "español, registro universitario pero llano", f_autoridadTexto: "yo, como profesor",
+      f_duracion: "90", f_lugar: "Aula",
+      f_restricciones: "De los 90 minutos del horario, unos 75 son reales",
+      f_voces: "Quienes no participan si no se les pregunta directo" },
+    radios: { conocimiento: "Se conocen poco", escritura: "Todas escriben con soltura", mobiliario: "Sí" },
+    checks: { "material|Postits": true, "material|Plumones": true, "material|Pizarrón": true,
+              "material|Proyector": true, "f_autoridad|on": true } },
+  { nombre: "Foro de planeación territorial (plantilla)", plantilla: true,
+    campos: { f_contexto: "Foro de planeación territorial", f_n: "40",
+      f_quienes: "Habitantes, ejidos, dependencias municipales y estatales, academia",
+      f_idioma: "español llano; traducir todo tecnicismo al hablarlo",
+      f_autoridadTexto: "funcionariado municipal o estatal", f_duracion: "240",
+      f_lugar: "Salón despejado",
+      f_restricciones: "Hay quien viaja desde lejos; la comida parte la jornada",
+      f_voces: "Las comunidades más alejadas y quienes no manejan el lenguaje técnico" },
+    radios: { conocimiento: "Se conocen poco", escritura: "Mixto", mobiliario: "Sí" },
+    checks: { "material|Papelones": true, "material|Plumones": true, "material|Cinta": true,
+              "material|Tarjetas": true, "material|Impresiones": true, "f_autoridad|on": true } },
+  { nombre: "Tutoría o asesoría individual (plantilla)", plantilla: true,
+    campos: { f_contexto: "Tutoría o sesión individual", f_n: "2", f_duracion: "45",
+      f_lugar: "Salón con mesas" },
+    radios: { conocimiento: "Se conocen bien", escritura: "Todas escriben con soltura", mobiliario: "Sí" },
+    checks: {} }
+];
+const CLAVE_GRUPOS = "fac_grupos";
+let grupoActivo = "";
+
+function leerGrupos() {
+  const g = almacen.get(CLAVE_GRUPOS, null);
+  return (g && g.length) ? g : GRUPOS_SEMILLA.slice();
+}
+function guardarGrupos(g) { almacen.set(CLAVE_GRUPOS, g); }
+function capturarPerfil(nombre) {
+  const perfil = { nombre: nombre, campos: {}, radios: {}, checks: {} };
+  PERFIL.campos.forEach(id => { const v = val(id); if (v) perfil.campos[id] = v; });
+  PERFIL.radios.forEach(n => { const v = radio(n); if (v) perfil.radios[n] = v; });
+  PERFIL.checksNombre.forEach(n => $$('input[name="' + n + '"]').forEach(e => {
+    if (e.checked) perfil.checks[n + "|" + e.value] = true;
+  }));
+  PERFIL.checksId.forEach(id => { if (chk(id)) perfil.checks[id + "|on"] = true; });
+  return perfil;
+}
+function aplicarGrupo(g) {
+  PERFIL.campos.forEach(id => { const e = $("#" + id); if (e) e.value = (g.campos || {})[id] || ""; });
+  PERFIL.radios.forEach(n => {
+    $$('input[name="' + n + '"]').forEach(e => { e.checked = (g.radios || {})[n] === e.value; });
+  });
+  PERFIL.checksNombre.forEach(n => $$('input[name="' + n + '"]').forEach(e => {
+    e.checked = !!(g.checks || {})[n + "|" + e.value];
+  }));
+  PERFIL.checksId.forEach(id => { const e = $("#" + id); if (e) e.checked = !!(g.checks || {})[id + "|on"]; });
+  grupoActivo = g.nombre;
+  sincronizarDependientes(); pintarGrupoActivo(); render();
+}
+function pintarGrupoActivo() {
+  $("#txtGrupoActivo").textContent = grupoActivo || "ninguno";
+}
+function pintarGrupos() {
+  const cont = $("#listaGrupos");
+  cont.innerHTML = "";
+  const grupos = leerGrupos();
+  if (!almacen.ok()) cont.innerHTML = '<div class="aviso">Este navegador no guarda datos: puedes usar las plantillas, pero los grupos que edites se pierden al cerrar. Respalda con «Exportar todo».</div>';
+  grupos.forEach((g, i) => {
+    const div = document.createElement("div");
+    div.className = "grupoCard" + (g.nombre === grupoActivo ? " activo" : "");
+    const c = g.campos || {};
+    div.innerHTML = "<h3>" + esc(g.nombre) + "</h3>" +
+      '<p class="meta">' + [esc(c.f_contexto || ""), c.f_n ? c.f_n + " personas" : "",
+        esc(c.f_lugar || ""), esc((g.radios || {}).escritura || "")].filter(Boolean).join(" · ") + "</p>";
+    const bar = document.createElement("div");
+    bar.className = "botonera";
+    const mk = (txt, fn, cls) => { const b = document.createElement("button"); b.type = "button"; b.className = "bt " + (cls || "min"); b.textContent = txt; b.addEventListener("click", fn); return b; };
+    bar.appendChild(mk("Usar este grupo", () => {
+      aplicarGrupo(g); irA("disenar");
+      flash("Cargué «" + g.nombre + "». Ahora solo el propósito, la fecha y las tensiones.", true);
+    }, "sec"));
+    bar.appendChild(mk("Actualizar con lo que tengo ahora", () => {
+      if (!confirm("¿Sobrescribir «" + g.nombre + "» con los datos que están hoy en el formulario?")) return;
+      const l = leerGrupos(); l[i] = capturarPerfil(g.nombre); guardarGrupos(l);
+      grupoActivo = g.nombre; pintarGrupos(); pintarGrupoActivo();
+      flash("Grupo actualizado.", true);
+    }));
+    bar.appendChild(mk("Duplicar", () => {
+      const nombre = prompt("Nombre del grupo nuevo:", g.nombre.replace(" (plantilla)", "") + " — copia");
+      if (!nombre) return;
+      const l = leerGrupos();
+      const copia = JSON.parse(JSON.stringify(g)); copia.nombre = nombre; copia.plantilla = false;
+      l.unshift(copia); guardarGrupos(l); pintarGrupos();
+    }));
+    bar.appendChild(mk("Renombrar", () => {
+      const nombre = prompt("Nuevo nombre:", g.nombre);
+      if (!nombre) return;
+      const l = leerGrupos(); l[i].nombre = nombre; l[i].plantilla = false; guardarGrupos(l);
+      if (grupoActivo === g.nombre) grupoActivo = nombre;
+      pintarGrupos(); pintarGrupoActivo();
+    }));
+    bar.appendChild(mk("Borrar", () => {
+      if (!confirm("¿Borrar «" + g.nombre + "»?")) return;
+      const l = leerGrupos(); l.splice(i, 1); guardarGrupos(l); pintarGrupos();
+    }));
+    div.appendChild(bar);
+    cont.appendChild(div);
+  });
+}
+
+/* ══════════════════════ presets por contexto ══════════════════════ */
+const PRESETS = {
+  "Asamblea comunitaria": { n: 40, escritura: "Mixto", lugar: "Casa ejidal", mobiliario: "Parcialmente", autoridad: true, materiales: ["Papelones", "Plumones"], duracion: "120" },
+  "Comité o consejo": { n: 9, escritura: "Mixto", lugar: "Salón con mesas", mobiliario: "Sí", autoridad: true, materiales: ["Papelones", "Plumones"], duracion: "90" },
+  "Clase o taller universitario": { n: 22, escritura: "Todas escriben con soltura", lugar: "Aula", mobiliario: "Sí", autoridad: false, materiales: ["Postits", "Plumones", "Pizarrón", "Proyector"], duracion: "90" },
+  "Foro de planeación territorial": { n: 40, escritura: "Mixto", lugar: "Salón despejado", mobiliario: "Sí", autoridad: true, materiales: ["Papelones", "Plumones", "Cinta", "Tarjetas"], duracion: "240", productos: ["Diagnóstico compartido", "Acuerdos con responsables y fechas"] },
+  "Grupo de ahorro (Cosecha Colectiva)": { n: 15, escritura: "Mixto", lugar: "Patio o explanada", mobiliario: "Sí", autoridad: false, materiales: ["Semillas, piedras u objetos", "Papelones"], duracion: "120" },
+  "Equipo de trabajo": { n: 7, escritura: "Todas escriben con soltura", lugar: "Salón con mesas", mobiliario: "Sí", autoridad: false, materiales: ["Postits", "Plumones"], duracion: "60" },
+  "Tutoría o sesión individual": { n: 2, escritura: "Todas escriben con soltura", lugar: "Salón con mesas", mobiliario: "Sí", autoridad: false, materiales: [], duracion: "45" }
+};
+const CONTEXTOS_RURALES = ["Asamblea comunitaria", "Foro de planeación territorial", "Grupo de ahorro (Cosecha Colectiva)"];
+const LUGARES_CAMPO = ["Campo abierto o sendero", "Casa ejidal", "Patio o explanada"];
+
+/* ══════════════════════ estado ══════════════════════ */
+let considerar = [], evitar = [], cadenaPropuesta = [], cadenaUsada = [];
+let sesionEvaluada = "";
+
+/* ══════════════════════ lectura del formulario ══════════════════════ */
+function minutosDe(sel, otra) {
+  if (sel === "otro") return otra || null;
+  if (sel === "varios") return null;
+  return sel ? Number(sel) : null;
+}
+function duracionTexto(sel, otra) {
+  if (!sel) return "";
+  if (sel === "varios") return "varios días";
+  if (sel === "otro") return otra ? otra + " minutos" : "";
+  if (sel === "240") return "medio día (aprox. 4 horas)";
+  if (sel === "480") return "día completo (aprox. 8 horas)";
+  const m = Number(sel);
+  return m >= 120 ? (m / 60) + " horas (" + m + " minutos)" : m + " minutos";
+}
+function recolectar() {
+  const modo = radio("modo") || "1";
+  const contextoSel = val("f_contexto");
+  const contexto = contextoSel === "Otro" ? (val("f_contextoOtro") || "otro contexto") : contextoSel;
+  const productos = marcados("producto").concat(val("f_productoOtro") ? [val("f_productoOtro")] : []);
+  const duracionSel = val("f_duracion");
+  const duracionOtra = num("f_duracionOtra");
+  return {
+    modo, contexto,
+    nombre: val("f_nombre"), fecha: val("f_fecha"),
+    proposito: val("f_proposito"), porque: val("f_porque"), productos,
+    n: num("f_n"), quienes: val("f_quienes"), conocimiento: radio("conocimiento"),
+    escritura: radio("escritura"),
+    autoridad: chk("f_autoridad") ? (val("f_autoridadTexto") || "sí, hay autoridad presente") : "",
+    idioma: val("f_idioma"),
+    duracionSel, duracionOtra,
+    duracion: duracionTexto(duracionSel, duracionOtra),
+    minutos: minutosDe(duracionSel, duracionOtra),
+    proceso: radio("proceso"), procesoI: num("f_procesoI"), procesoN: num("f_procesoN"),
+    lugar: [val("f_lugar"), val("f_lugarTexto")].filter(Boolean).join(" — "),
+    lugarSel: val("f_lugar"),
+    mobiliario: radio("mobiliario"),
+    materiales: marcados("material"), restricciones: val("f_restricciones"),
+    estado: marcados("estado"), fase: radio("fase"), tensiones: val("f_tensiones"),
+    agravios: radio("agravios"), voces: val("f_voces"),
+    intentado: val("f_intentado"), noRepetir: val("f_noRepetir"), conocidas: val("f_conocidas"),
+    considerar: considerar.slice(), evitar: evitar.slice(),
+    cadenaPropuesta: cadenaPropuesta.slice(), cadenaUsada: cadenaUsada.slice(),
+    sesionEvaluada: sesionEvaluada, grupo: grupoActivo,
+    entregables: marcados("entregable"), notas: val("f_notas"),
+    formatoHoy: val("f_formatoHoy"), frecuencia: val("f_frecuencia"), sintoma: val("f_sintoma"),
+    entre: radio("entre"), implicados: val("f_implicados"), porSeparado: radio("porSeparado"),
+    necesidades: val("f_necesidades"), riesgo: radio("riesgo"), cofacilita: val("f_cofacilita"),
+    quePaso: val("f_quePaso"), queFunciono: val("f_queFunciono"), dondeAtoro: val("f_dondeAtoro"),
+    queDijeron: val("f_queDijeron"), queDecidieron: val("f_queDecidieron"), queSigue: val("f_queSigue")
+  };
+}
+
+/* ══════════════════════ composición del encargo ══════════════════════ */
+const ENCABEZADOS = {
+  "1": "Voy a facilitar una sesión y quiero que uses el skill de facilitación para diseñarla.",
+  "2": "Tengo una reunión que no está funcionando y quiero rediseñarla con el skill de facilitación.",
+  "3": "Voy a preparar una conversación difícil / mediar un conflicto y quiero que uses el skill de facilitación.",
+  "4": "Ya facilité una sesión y quiero evaluarla con el skill de facilitación."
+};
+function entregableTexto(d) {
+  const e = d.entregables;
+  if (!e.length) return "un guion de facilitación completo";
+  if (e.length === 1) return e[0];
+  return e.slice(0, -1).join(", ") + " y " + e[e.length - 1];
+}
+function esRural(d) {
+  return CONTEXTOS_RURALES.indexOf(d.contexto) >= 0 || LUGARES_CAMPO.indexOf(d.lugarSel) >= 0;
+}
+function componer(d) {
+  const L = [];
+  const bullet = (etiqueta, valor) => { if (valor !== null && valor !== undefined && String(valor).trim() !== "") L.push("- " + etiqueta + ": " + valor); };
+  L.push(ENCABEZADOS[d.modo]);
+  L.push("");
+  L.push("## Diagnóstico");
+
+  const enc = [d.nombre, d.contexto, d.fecha ? fechaLarga(d.fecha) : ""].filter(Boolean).join(" — ");
+  bullet(d.modo === "4" ? "Sesión" : "Encuentro", enc);
+  if (d.modo === "4") bullet("Es la evaluación de", d.sesionEvaluada);
+
+  if (d.modo !== "4") {
+    bullet("Propósito (qué será distinto al terminar)", d.proposito);
+    bullet("Por qué importa", d.porque);
+    bullet("Productos esperados", d.productos.join(", "));
+  }
+  bullet("Participantes", [d.n ? d.n + " personas" : "", d.quienes].filter(Boolean).join(" — "));
+  bullet("Se conocen", d.conocimiento);
+  bullet("Escritura", d.escritura);
+  bullet("Autoridad presente", d.autoridad);
+  bullet("Idioma y registro", d.idioma);
+  bullet(d.modo === "4" ? "Duración" : "Duración total",
+    [d.duracion, d.proceso === "unica" ? "sesión única" : (d.proceso === "proceso" ? (d.procesoI && d.procesoN ? "sesión " + d.procesoI + " de " + d.procesoN + " de un proceso" : "parte de un proceso") : "")].filter(Boolean).join(" — "));
+  bullet("Lugar", [d.lugar, d.mobiliario ? "mobiliario movible: " + d.mobiliario.toLowerCase() : ""].filter(Boolean).join(" — "));
+  bullet("Materiales disponibles", d.materiales.join(", "));
+  bullet("Restricciones prácticas", d.restricciones);
+  bullet("Estado del grupo", d.estado.join(", "));
+  bullet("Fase de la decisión (rombo)", d.fase);
+  bullet("Tensiones o temas espinosos", d.tensiones);
+  bullet("Agravios históricos o desigualdad de poder", d.agravios);
+  bullet("Voces que suelen quedar fuera", d.voces);
+
+  if (d.modo === "2") {
+    bullet("Formato dominante hoy", d.formatoHoy);
+    bullet("Frecuencia", d.frecuencia);
+    bullet("Peor síntoma", d.sintoma);
+  }
+  if (d.modo === "3") {
+    bullet("El conflicto es", d.entre);
+    bullet("Implicados y mi relación con ellos", d.implicados);
+    bullet("¿Ya hablé por separado con cada parte?", d.porSeparado);
+    bullet("Lo que necesita cada quien, según yo", d.necesidades);
+    bullet("Riesgo de violencia o daño", d.riesgo);
+    bullet("Co-facilitación", d.cofacilita);
+  }
+  if (d.modo === "4") {
+    bullet("Qué pasó", d.quePaso);
+    bullet("Qué funcionó", d.queFunciono);
+    bullet("Dónde se atoró", d.dondeAtoro);
+    bullet("Qué dijeron los participantes", d.queDijeron);
+    bullet("Qué decidieron al final", d.queDecidieron);
+    bullet("Qué sigue", d.queSigue);
+  }
+  if (d.modo !== "4") {
+    bullet("Historia previa", d.intentado);
+    bullet("Lo que no quiero repetir", d.noRepetir);
+    bullet("Ya conocen estas técnicas", d.conocidas);
+  }
+  if (d.modo === "4") bullet("Cadena que usé (en orden)", d.cadenaUsada.join(" → "));
+  else bullet("Cadena que se me ocurre (en orden)", d.cadenaPropuesta.join(" → "));
+  bullet("Quiero considerar", d.considerar.join(", "));
+  bullet("Evitar", d.evitar.join(", "));
+  bullet("Notas", d.notas);
+
+  /* --- lo que te pido --- */
+  const pide = [];
+  if (d.modo === "1") {
+    pide.push("Si falta algo esencial para diseñar bien, pregúntame primero — máximo 3 preguntas.");
+    pide.push("Propón 2 cadenas alternativas de 2 a 4 estructuras (apertura / desarrollo / cierre), con justificación breve de cada una, y recomiéndame una con argumentos.");
+    pide.push("Cuando yo confirme, produce " + entregableTexto(d) + ": propósito, agenda minutada, invitaciones estructurantes ya redactadas en lenguaje llano y contextualizadas a ESTE grupo y ESTE tema (no genéricas), arreglo del espacio y materiales, notas de facilitación con riesgos típicos y cómo responder, y plan B si el tiempo se come la agenda.");
+    pide.push("Deja fuera lo que no aplique a las condiciones reales (materiales, escritura, movilidad).");
+  } else if (d.modo === "2") {
+    pide.push("Diagnostica qué microestructura convencional la domina y por qué produce este síntoma (fundamentos/ls-cinco-convencionales.md).");
+    pide.push("Propón con qué sustituirla, en dos versiones: un cambio mínimo que pueda probar la próxima reunión sin anunciar nada, y un rediseño completo.");
+    pide.push("Dime qué señales me dirán si funcionó.");
+    pide.push("Cuando yo confirme el camino, produce " + entregableTexto(d) + ".");
+  } else if (d.modo === "3") {
+    pide.push("Dime si esto es para mediar entre personas (ficha 62), litigar posturas del grupo (47), abrir un tema indecible (48) o trabajo de fuego (60) — y por qué.");
+    pide.push("Dame el guion completo: encuadre y acuerdos, preguntas textuales por momento, qué hacer si escala, y qué NO hacer.");
+    pide.push("Dime qué debo revisar en mí antes de entrar.");
+  } else {
+    pide.push("Ayúdame a leerla con What / So What / Now What y con el rombo: ¿en qué fase estaba el grupo y qué pasó realmente?");
+    pide.push("Qué haría distinto la próxima vez, en concreto.");
+    pide.push("Qué conviene registrar como aprendizaje del grupo.");
+  }
+
+  /* --- añadidos condicionales --- */
+  if (d.escritura === "Varias personas no leen ni escriben con facilidad")
+    pide.push("Este grupo tiene escolaridad diversa: prioriza técnicas orales, gráficas y con objetos (mapas parlantes, símbolos, semillas o piedras para votar) y ofrece variante sin escritura de cualquier técnica que la requiera.");
+  if (d.agravios === "Sí")
+    pide.push("Hay agravios históricos y desigualdad de poder: revisa fundamentos/mindell-fuego.md antes de recomendar, gradúa el conflicto y dime qué NO conviene intentar todavía.");
+  if (d.fase === "No sé")
+    pide.push("No tengo claro en qué fase está el grupo: diagnostícalo con el rombo de Kaner a partir de lo que te describí y dime en qué zona crees que está.");
+  if (esRural(d))
+    pide.push("Es trabajo en campo con grupo rural: revisa fundamentos/geilfus-drp.md y considera si conviene una herramienta de diagnóstico rural participativo (fichas 64–69) en vez de una estructura de salón.");
+  if (d.duracionSel === "varios" || (d.minutos !== null && d.minutos >= 240))
+    pide.push("Es una sesión larga: incluye descansos, cuidado de los cuerpos (agua, comida, sillas) y considera equipos de cuidado (ficha 63).");
+  if (d.proceso === "proceso")
+    pide.push("Es " + (d.procesoI && d.procesoN ? "la sesión " + d.procesoI + " de " + d.procesoN : "parte") + " de un proceso: dime también cómo encaja en el arco completo y qué conviene dejar para las siguientes.");
+  if (d.modo === "3" && d.riesgo === "Sí")
+    pide.push("Hay riesgo de violencia o de daño: dime primero si esto debe facilitarse y con quién más, qué respaldo institucional necesito y qué salidas dejar abiertas. No lo trates como una sesión ordinaria.");
+  if (d.modo !== "4" && d.cadenaPropuesta.length >= 2)
+    pide.push("Traigo una cadena tentativa: dime si el orden y las piezas funcionan para este caso, qué cambiarías y por qué.");
+  if (d.modo !== "4" && d.considerar.length)
+    pide.push("Revisa las técnicas que puse en «quiero considerar» y dime honestamente si sirven para este caso o si conviene otra cosa.");
+  if (d.modo === "4" && d.cadenaUsada.length)
+    pide.push("Evalúa la cadena que usé pieza por pieza: cuál sobró, cuál faltó y en qué orden convenía. Guárdame la conclusión en una línea, para mi registro de cadenas.");
+
+  L.push("");
+  L.push("## Lo que te pido");
+  pide.forEach((p, i) => L.push((i + 1) + ". " + p));
+  return L.join("\n");
+}
+
+/* ══════════════════════ completitud y avisos ══════════════════════ */
+const PESOS = {
+  "1": [["proposito", 20, "propósito"], ["n", 12, "número de personas"], ["duracion", 12, "duración"], ["fase", 10, "fase del rombo"], ["escritura", 10, "escritura"], ["tensiones", 8, "tensiones"], ["estado", 8, "estado del grupo"], ["productos", 8, "productos"], ["contexto", 6, "contexto"], ["lugar", 6, "lugar"]],
+  "4": [["quePaso", 20, "qué pasó"], ["fase", 10, "fase del rombo"], ["queFunciono", 10, "qué funcionó"], ["dondeAtoro", 10, "dónde se atoró"], ["queDecidieron", 10, "qué decidieron"], ["queSigue", 8, "qué sigue"], ["estado", 8, "estado del grupo"], ["tensiones", 8, "tensiones"], ["n", 10, "número de personas"], ["contexto", 6, "contexto"]]
+};
+function lleno(d, k) {
+  const v = d[k];
+  if (Array.isArray(v)) return v.length > 0;
+  if (k === "duracion") return !!d.duracion;
+  return v !== null && v !== undefined && String(v).trim() !== "";
+}
+function completitud(d) {
+  const tabla = PESOS[d.modo === "4" ? "4" : "1"];
+  let pts = 0; const faltan = [];
+  tabla.forEach(([k, p, etiqueta]) => { if (lleno(d, k)) pts += p; else faltan.push(etiqueta); });
+  return { pts: Math.min(100, pts), faltan };
+}
+const GENERICOS = /^(revisar avances|revisión de avances|dar seguimiento|seguimiento|informar|información|reporte|reportar avances|presentar resultados|junta mensual|reunión mensual|ponernos al día|actualizar|platicar|ver cómo vamos)\b/i;
+function avisoProposito(d) {
+  if (d.modo === "4") return "";
+  const p = d.proposito.trim();
+  if (!p) return "";
+  if (GENERICOS.test(p) || p.split(/\s+/).length <= 3)
+    return "Ojo: «" + p + "» describe el formato, no el propósito. ¿Qué debe ser distinto al terminar? Nombra la decisión, el acuerdo, la idea o el vínculo que hoy no existe.";
+  return "";
+}
+function avisoProductos(d) {
+  const k = d.productos.length, t = d.minutos;
+  if (!k || t === null) return "";
+  if ((k >= 3 && t <= 90) || (k >= 4 && t <= 180) || (k >= 6))
+    return "Estás pidiendo " + k + " productos en " + t + " minutos; el skill probablemente te va a sugerir recortar.";
+  return "";
+}
+
+function avisoRealidad(d) {
+  if (!d.n || !d.minutos || d.modo === "4") return "";
+  const porPersona = d.minutos / d.n;
+  const duros = d.productos.filter(x => /Decisión|Acuerdos|Lista priorizada|Plan o cronograma|Diagnóstico/.test(x));
+  if (porPersona >= 3) return "";
+  const redondo = Math.round(porPersona * 10) / 10;
+  const cuanto = porPersona < 1 ? "menos de un minuto de palabra por persona"
+    : (redondo === 1 ? "un minuto de palabra por persona"
+       : String(redondo).replace(".", ",") + " minutos de palabra por persona");
+  if (duros.length)
+    return "Cuentas rápidas: " + d.n + " personas en " + d.minutos + " minutos son " + cuanto +
+      ". Para llegar a «" + duros[0].toLowerCase() + "» casi todo tendrá que pasar en grupos pequeños simultáneos, " +
+      "o conviene partir la sesión en dos. El skill te lo va a decir; mejor saberlo desde ahora.";
+  return "Cuentas rápidas: " + d.n + " personas en " + d.minutos + " minutos son " + cuanto +
+    ". Si quieres que todas hablen, la sesión tiene que correr en grupos pequeños a la vez.";
+}
+
+/* ══════════════════════ render ══════════════════════ */
+let ultimo = { d: null, texto: "" };
+function render() {
+  const d = recolectar();
+  const texto = componer(d);
+  ultimo = { d, texto };
+  $("#salida").textContent = texto;
+
+  const c = completitud(d);
+  $("#barraCompletitud").style.width = c.pts + "%";
+  $("#txtCompletitud").textContent = "Diagnóstico: " + c.pts + "%";
+  $("#txtFaltan").textContent = c.faltan.length ? "falta " + c.faltan.slice(0, 3).join(", ") : "completo";
+
+  const ap = avisoProposito(d), apr = avisoProductos(d), are = avisoRealidad(d);
+  const eap = $("#avisoProposito"), eapr = $("#avisoProductos"), eare = $("#avisoRealidad");
+  eap.textContent = ap; mostrar(eap, !!ap);
+  eapr.textContent = apr; mostrar(eapr, !!apr);
+  eare.textContent = are; mostrar(eare, !!are);
+  const eev = $("#avisoEvaluada");
+  eev.textContent = sesionEvaluada ? "Estás evaluando: " + sesionEvaluada : "";
+  mostrar(eev, !!sesionEvaluada);
+
+  $("#impresionMateriales").innerHTML = d.materiales.length
+    ? "<h3>Materiales</h3><ul>" + d.materiales.map(m => "<li>" + esc(m) + "</li>").join("") + "</ul>" : "";
+
+  guardarBorrador(d);
+}
+
+/* visibilidad por modo */
+function aplicarModo() {
+  const m = radio("modo") || "1";
+  $$("section.bloque[data-modos]").forEach(s => {
+    mostrar(s, s.dataset.modos.split(",").indexOf(m) >= 0);
+  });
+  mostrar($("#c_cadenaPropuesta"), m !== "4");
+}
+
+/* ══════════════════════ chips ══════════════════════ */
+function pintarChips() {
+  const pinta = (lista, ul, quitar) => {
+    if (!ul) return;
+    ul.innerHTML = "";
+    lista.forEach((t, i) => {
+      const li = document.createElement("li");
+      li.append(document.createTextNode(t));
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = "×"; b.title = "Quitar " + t;
+      b.setAttribute("aria-label", "Quitar " + t);
+      b.addEventListener("click", () => { quitar(i); });
+      li.appendChild(b); ul.appendChild(li);
+    });
+  };
+  pinta(considerar, $("#listaConsiderar"), i => { considerar.splice(i, 1); pintarChips(); render(); });
+  pinta(evitar, $("#listaEvitar"), i => { evitar.splice(i, 1); pintarChips(); render(); });
+  pinta(cadenaPropuesta, $("#listaCadena"), i => { cadenaPropuesta.splice(i, 1); pintarChips(); render(); });
+  pinta(cadenaPropuesta, $("#listaCadenaGuia"), i => { cadenaPropuesta.splice(i, 1); pintarChips(); render(); });
+  pinta(cadenaUsada, $("#listaCadenaUsada"), i => { cadenaUsada.splice(i, 1); pintarChips(); render(); });
+  mostrar($("#tiraCadena"), cadenaPropuesta.length > 0);
+}
+function sumarACadena(nombre) {
+  if (!nombre) return;
+  cadenaPropuesta.push(nombre);
+  pintarChips(); render();
+}
+function sumarConsiderar(nombre) {
+  if (!nombre) return;
+  if (considerar.indexOf(nombre) < 0) considerar.push(nombre);
+  pintarChips(); render();
+}
+
+/* ══════════════════════ borrador ══════════════════════ */
+const CLAVE_BORRADOR = "fac_borrador", CLAVE_HIST = "fac_historial", CLAVE_TEMA = "fac_tema";
+function estadoFormulario() {
+  const o = { campos: {}, radios: {}, checks: {}, considerar, evitar,
+              cadenaPropuesta, cadenaUsada, sesionEvaluada, grupo: grupoActivo };
+  $$("#form input, #form select, #form textarea").forEach(e => {
+    if (e.type === "radio") { if (e.checked) o.radios[e.name] = e.value; }
+    else if (e.type === "checkbox") { o.checks[(e.name || e.id) + "|" + e.value] = e.checked; }
+    else if (e.id) { o.campos[e.id] = e.value; }
+  });
+  return o;
+}
+function aplicarEstado(o) {
+  if (!o) return;
+  Object.keys(o.campos || {}).forEach(id => { const e = $("#" + id); if (e) e.value = o.campos[id]; });
+  Object.keys(o.radios || {}).forEach(n => {
+    const e = $('input[name="' + n + '"][value="' + String(o.radios[n]).replace(/"/g, '\\"') + '"]');
+    if (e) e.checked = true;
+  });
+  $$("#form input[type=checkbox]").forEach(e => {
+    const k = (e.name || e.id) + "|" + e.value;
+    if (o.checks && k in o.checks) e.checked = o.checks[k];
+  });
+  considerar = (o.considerar || []).slice();
+  evitar = (o.evitar || []).slice();
+  cadenaPropuesta = (o.cadenaPropuesta || []).slice();
+  cadenaUsada = (o.cadenaUsada || []).slice();
+  sesionEvaluada = o.sesionEvaluada || "";
+  grupoActivo = o.grupo || "";
+  pintarChips(); pintarGrupoActivo(); sincronizarDependientes(); aplicarModo();
+}
+function guardarBorrador() { almacen.set(CLAVE_BORRADOR, estadoFormulario()); }
+
+/* ══════════════════════ historial ══════════════════════ */
+const NOMBRES_MODO = { "1": "Diseñar sesión", "2": "Rediseñar reunión", "3": "Conversación difícil", "4": "Evaluar sesión" };
+function leerHistorial() { return almacen.get(CLAVE_HIST, []) || []; }
+function pintarHistorial() {
+  const cont = $("#listaHistorial");
+  cont.innerHTML = "";
+  if (!almacen.ok()) {
+    cont.innerHTML = '<div class="aviso">Historial no disponible en este navegador; usa «Descargar .md».</div>';
+    return;
+  }
+  const h = leerHistorial();
+  if (!h.length) { cont.innerHTML = '<p class="pista">Todavía no has guardado ningún encargo.</p>'; return; }
+  h.forEach((it, i) => {
+    const div = document.createElement("div");
+    div.className = "hist";
+    div.innerHTML = "<h3>" + esc(it.titulo || "Sin nombre") + "</h3>" +
+      '<p class="meta">' + [esc(NOMBRES_MODO[it.modo] || ""), it.grupo ? esc(it.grupo) : "",
+        "guardado el " + esc(it.guardado || ""),
+        (it.cadena && it.cadena.length) ? "cadena: " + esc(it.cadena.join(" → ")) : ""].filter(Boolean).join(" · ") + "</p>";
+    const bar = document.createElement("div");
+    bar.className = "botonera";
+    const mk = (txt, fn, cls) => { const b = document.createElement("button"); b.type = "button"; b.className = "bt " + (cls || "min"); b.textContent = txt; b.addEventListener("click", fn); return b; };
+    const pre = document.createElement("pre");
+    pre.className = "salida oculto"; pre.textContent = it.texto;
+    bar.appendChild(mk("Ver", () => pre.classList.toggle("oculto")));
+    bar.appendChild(mk("Copiar", () => copiar(it.texto, ok => flash(ok ? "Encargo copiado." : "No se pudo copiar; selecciona el texto a mano.", ok))));
+    bar.appendChild(mk("Duplicar como base", () => {
+      aplicarEstado(it.estado); render(); irA("disenar");
+      flash("Se cargó ese encargo en el formulario.", true);
+    }));
+    if (it.modo !== "4") bar.appendChild(mk("Evaluar esta sesión", () => {
+      aplicarEstado(it.estado);
+      const r = $('input[name="modo"][value="4"]'); if (r) r.checked = true;
+      ["f_quePaso", "f_queFunciono", "f_dondeAtoro", "f_queDijeron", "f_queDecidieron", "f_queSigue"]
+        .forEach(id => { const e = $("#" + id); if (e) e.value = ""; });
+      cadenaUsada = (it.cadena || []).slice();
+      sesionEvaluada = (it.titulo || "esa sesión") + (it.guardado ? " (diseñada el " + it.guardado + ")" : "");
+      aplicarModo(); pintarChips(); render(); irA("disenar");
+      flash("Cargué el diagnóstico de esa sesión. Ahora cuenta cómo salió.", true);
+    }, "sec"));
+    bar.appendChild(mk("Descargar .md", () => descargar(archivoNombre(it.titulo, "md"), it.texto, "text/markdown")));
+    bar.appendChild(mk("Borrar", () => {
+      if (!confirm("¿Borrar «" + (it.titulo || "sin nombre") + "» del historial?")) return;
+      const l = leerHistorial(); l.splice(i, 1); almacen.set(CLAVE_HIST, l); pintarHistorial();
+    }));
+    div.appendChild(bar); div.appendChild(pre);
+    cont.appendChild(div);
+  });
+}
+function archivoNombre(titulo, ext) {
+  const base = (titulo || "encargo-facilitacion").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "encargo-facilitacion";
+  return base + "-" + hoyISO() + "." + ext;
+}
+
+/* ══════════════════════ banco ══════════════════════ */
+function propositosUnicos() {
+  const s = new Set();
+  CATALOGO.forEach(t => (t.proposito || []).forEach(p => s.add(p)));
+  return Array.from(s).sort((a, b) => a.localeCompare(b, "es"));
+}
+function fuentesUnicas() {
+  const s = new Set(CATALOGO.map(t => t.fuente).filter(Boolean));
+  return Array.from(s).sort((a, b) => a.localeCompare(b, "es"));
+}
+function etiquetaFicha(x) {
+  const base = String(x.nombre).split(" (")[0].trim();
+  const corto = base.length >= 6 ? base : x.nombre;
+  return corto + (x.n ? " (ficha " + x.n + ")" : "");
+}
+function llenarDatalist() {
+  const dl = $("#listaTecnicas");
+  if (!dl) return;
+  dl.innerHTML = "";
+  CATALOGO.slice().sort((a, b) => (a.n || 999) - (b.n || 999)).forEach(x => {
+    const o = document.createElement("option");
+    o.value = etiquetaFicha(x);
+    dl.appendChild(o);
+  });
+}
+function llenarSelectsBanco() {
+  const sp = $("#b_proposito"), sf = $("#b_fuente");
+  const vp = sp.value, vf = sf.value;
+  sp.innerHTML = '<option value="">Cualquiera</option>';
+  propositosUnicos().forEach(p => { const o = document.createElement("option"); o.textContent = p; sp.appendChild(o); });
+  sf.innerHTML = '<option value="">Cualquiera</option>';
+  fuentesUnicas().forEach(p => { const o = document.createElement("option"); o.textContent = p; sf.appendChild(o); });
+  sp.value = vp; sf.value = vf;
+  $("#pistaBanco").textContent = "Las " + CATALOGO.length + " técnicas del skill, con tiempo, tamaño y para qué sirve leídos de su propia ficha. "
+    + "Aquí solo eliges; la ficha completa la lee el skill al diseñar.";
+}
+function filtrar() {
+  const q = val("b_texto").toLowerCase();
+  const prop = val("b_proposito"), fase = val("b_fase"), fuente = val("b_fuente");
+  const g = num("b_grupo");
+  const t = Number($("#b_tiempo").value);
+  const sinEsc = chk("b_sinEscritura"), mov = chk("b_movimiento");
+  return CATALOGO.filter(x => {
+    if (q && (x.nombre + " " + (x.paraQueSirve || "") + " " + (x.tipo || "") + " " + (x.proposito || []).join(" ")).toLowerCase().indexOf(q) < 0) return false;
+    if (prop && (x.proposito || []).indexOf(prop) < 0) return false;
+    if (fase && (x.fase || []).indexOf(fase) < 0) return false;
+    if (fuente && x.fuente !== fuente) return false;
+    if (g !== null && g > 0) {
+      if (x.grupoMin !== null && g < x.grupoMin) return false;
+      if (x.grupoMax !== null && g > x.grupoMax) return false;
+    }
+    if (t > 0 && x.minutosMin !== null && x.minutosMin > t) return false;
+    if (sinEsc && x.requiereEscritura) return false;
+    if (mov && !x.requiereMovimiento) return false;
+    return true;
+  });
+}
+function rangoGrupo(x) {
+  if (x.grupoTexto) return x.grupoTexto;
+  if (x.grupoMin === null && x.grupoMax === null) return "";
+  if (x.grupoMax === null) return "desde " + x.grupoMin + " personas";
+  if (x.grupoMin === null) return "hasta " + x.grupoMax + " personas";
+  return x.grupoMin + "–" + x.grupoMax + " personas";
+}
+function rangoTiempo(x) {
+  if (x.tiempoTexto) return x.tiempoTexto;
+  if (x.minutosMin === null) return "";
+  if (x.minutosMax === null || x.minutosMax === x.minutosMin) return x.minutosMin + " min";
+  return x.minutosMin + "–" + x.minutosMax + " min";
+}
+function pintarBanco() {
+  const res = filtrar();
+  $("#conteoBanco").textContent = res.length + (res.length === 1 ? " técnica" : " técnicas");
+  const cont = $("#resultados");
+  cont.innerHTML = "";
+  if (!res.length) { cont.innerHTML = '<p class="pista">Nada con esos filtros. Prueba con menos restricciones.</p>'; return; }
+  res.forEach(x => {
+    const div = document.createElement("div");
+    div.className = "tecnica";
+    const etiquetaN = x.n ? '<span class="num">' + String(x.n).padStart(2, "0") + "</span> · " : "";
+    div.innerHTML = "<h3>" + etiquetaN + esc(x.nombre) + "</h3>" +
+      '<p class="meta">' + [esc(x.fuente || ""), esc(x.tipo || ""), rangoGrupo(x), rangoTiempo(x),
+        x.requiereEscritura ? "requiere escritura" : "se puede sin escritura",
+        x.requiereMovimiento ? "requiere moverse" : "",
+        ""].filter(Boolean).join(" · ") + "</p>" +
+      "<p>" + esc(x.paraQueSirve || "") + "</p>";
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "bt sec"; b.textContent = "Sumar al encargo";
+    b.addEventListener("click", () => {
+      sumarConsiderar(etiquetaFicha(x));
+      b.textContent = "Sumada ✓"; setTimeout(() => { b.textContent = "Sumar al encargo"; }, 1400);
+    });
+    div.appendChild(b);
+    cont.appendChild(div);
+  });
+}
+
+/* ══════════════════════ render de la guía ══════════════════════ */
+function cabeEnClase(x) {
+  const cabeGrupo = (x.grupoMin === null || x.grupoMin <= 25) && (x.grupoMax === null || x.grupoMax >= 20);
+  const cabeTiempo = x.minutosMin === null || x.minutosMin <= 90;
+  return cabeGrupo && cabeTiempo;
+}
+function idGrupo(tag) { return "grupo-" + tag.replace(/[^a-záéíóúñ0-9]+/gi, "-").toLowerCase(); }
+function pintarGuia() {
+  const soloClase = chk("g_clase");
+  const usadas = new Set();
+  const indice = $("#indiceGuia"), cuerpo = $("#cuerpoGuia");
+  indice.innerHTML = ""; cuerpo.innerHTML = "";
+  let totales = 0;
+
+  const bloques = GRUPOS_FUNCION.map(g => {
+    let lista = CATALOGO.filter(x => (x.proposito || []).indexOf(g.tag) >= 0);
+    if (soloClase) lista = lista.filter(cabeEnClase);
+    lista.sort((a, b) => (a.n || 999) - (b.n || 999));
+    lista.forEach(x => usadas.add(x.nombre));
+    return { g, lista };
+  }).filter(b => b.lista.length);
+
+  const sueltas = CATALOGO.filter(x => !usadas.has(x.nombre) && (!soloClase || cabeEnClase(x)));
+  if (sueltas.length) bloques.push({
+    g: { tag: "otras", titulo: "Otras", cuando: "Fichas cuya etiqueta de función no cae en los grupos anteriores." },
+    lista: sueltas
+  });
+
+  bloques.forEach(({ g, lista }) => {
+    totales += lista.length;
+    const chip = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = g.titulo + " (" + lista.length + ")";
+    b.addEventListener("click", () => {
+      const destino = $("#" + idGrupo(g.tag));
+      if (destino) destino.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    chip.appendChild(b); indice.appendChild(chip);
+
+    const sec = document.createElement("div");
+    sec.className = "grupo"; sec.id = idGrupo(g.tag);
+    sec.innerHTML = "<h3>" + esc(g.titulo) + ' <span class="cuenta">· ' + lista.length +
+      (lista.length === 1 ? " técnica" : " técnicas") + "</span></h3>" +
+      '<p class="cuando">' + esc(g.cuando) + "</p>" +
+      (g.enClase ? '<p class="enclase">' + esc(g.enClase) + "</p>" : "");
+    const ul = document.createElement("ul");
+    ul.className = "tecnicas";
+    lista.forEach(x => {
+      const li = document.createElement("li");
+      const txt = document.createElement("div");
+      txt.className = "txt";
+      txt.innerHTML = "<b>" + (x.n ? '<span class="num">' + String(x.n).padStart(2, "0") + "</span> · " : "") +
+        esc(x.nombre) + "</b><br>" + esc(x.paraQueSirve || "") +
+        '<div class="datos">' + [esc(x.fuente || ""), rangoTiempo(x), rangoGrupo(x),
+          x.requiereEscritura ? "requiere escritura" : "se puede sin escritura",
+          x.requiereMovimiento ? "requiere moverse" : ""].filter(Boolean).join(" · ") + "</div>";
+      const acciones = document.createElement("div");
+      acciones.className = "no-imprimir";
+      const etiqueta = etiquetaFicha(x);
+      const bt = document.createElement("button");
+      bt.type = "button"; bt.className = "bt sec"; bt.textContent = "Sumar al encargo";
+      bt.addEventListener("click", () => {
+        sumarConsiderar(etiqueta);
+        bt.textContent = "Sumada ✓"; setTimeout(() => { bt.textContent = "Sumar al encargo"; }, 1400);
+      });
+      const bc = document.createElement("button");
+      bc.type = "button"; bc.className = "bt min"; bc.textContent = "＋ a mi cadena";
+      bc.style.marginLeft = "6px";
+      bc.addEventListener("click", () => {
+        sumarACadena(etiqueta);
+        bc.textContent = "en la cadena ✓"; setTimeout(() => { bc.textContent = "＋ a mi cadena"; }, 1400);
+      });
+      acciones.appendChild(bt); acciones.appendChild(bc);
+      li.appendChild(txt); li.appendChild(acciones); ul.appendChild(li);
+    });
+    sec.appendChild(ul); cuerpo.appendChild(sec);
+  });
+
+  if (!totales) cuerpo.innerHTML = '<p class="pista">Con ese filtro no queda ninguna técnica.</p>';
+}
+
+/* ══════════════════════ pestañas ══════════════════════ */
+const PESTANAS = ["disenar", "grupos", "banco", "guia", "historial", "instructivo"];
+function irA(cual) {
+  PESTANAS.forEach(k => {
+    const tab = $("#tab-" + k), panel = $("#p-" + k);
+    const activo = k === cual;
+    tab.setAttribute("aria-selected", activo ? "true" : "false");
+    mostrar(panel, activo);
+  });
+  if (cual === "historial") pintarHistorial();
+  if (cual === "banco") pintarBanco();
+  if (cual === "guia") pintarGuia();
+  if (cual === "grupos") pintarGrupos();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ══════════════════════ avisos efímeros ══════════════════════ */
+let tFlash = null;
+function flash(msg, ok) {
+  const a = $("#avisoCopia");
+  a.textContent = msg;
+  a.className = "aviso no-imprimir " + (ok ? "verde" : "rojo");
+  clearTimeout(tFlash);
+  tFlash = setTimeout(() => a.classList.add("oculto"), 4000);
+}
+
+/* ══════════════════════ dependientes ══════════════════════ */
+function sincronizarDependientes() {
+  mostrar($("#c_contextoOtro"), val("f_contexto") === "Otro");
+  mostrar($("#c_duracionOtra"), val("f_duracion") === "otro");
+  mostrar($("#c_proceso"), radio("proceso") === "proceso");
+  mostrar($("#avisoRiesgo"), radio("riesgo") === "Sí");
+  const at = $("#f_autoridadTexto");
+  mostrar(at, chk("f_autoridad"));
+}
+
+/* presets */
+function aplicarPreset(ctx) {
+  const p = PRESETS[ctx];
+  if (!p) return;
+  const ponerCampo = (id, v) => { const e = $("#" + id); if (e && !e.dataset.tocado && (e.value === "" || e.value == null)) e.value = v; };
+  const ponerRadio = (name, v) => {
+    if ($('input[name="' + name + '"]:checked')) return;
+    const e = $('input[name="' + name + '"][value="' + v + '"]'); if (e) e.checked = true;
+  };
+  ponerCampo("f_n", p.n);
+  ponerCampo("f_duracion", p.duracion);
+  ponerCampo("f_lugar", p.lugar);
+  ponerRadio("escritura", p.escritura);
+  ponerRadio("mobiliario", p.mobiliario);
+  if (p.autoridad && !$("#f_autoridad").dataset.tocado) $("#f_autoridad").checked = true;
+  const hayMat = marcados("material").length > 0;
+  if (!hayMat) (p.materiales || []).forEach(m => {
+    const e = $$('input[name="material"]').find(x => x.value === m); if (e) e.checked = true;
+  });
+  const hayProd = marcados("producto").length > 0;
+  if (!hayProd) (p.productos || []).forEach(m => {
+    const e = $$('input[name="producto"]').find(x => x.value === m); if (e) e.checked = true;
+  });
+  sincronizarDependientes();
+  flash("Se precargaron valores típicos de «" + ctx + "». Todos son editables.", true);
+}
+
+/* ══════════════════════ arranque ══════════════════════ */
+document.addEventListener("DOMContentLoaded", () => {
+  /* tema */
+  const temaGuardado = almacen.get(CLAVE_TEMA, null);
+  if (temaGuardado) document.documentElement.setAttribute("data-tema", temaGuardado);
+  $("#btTema").addEventListener("click", () => {
+    const actual = document.documentElement.getAttribute("data-tema");
+    const oscuroSistema = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const siguiente = actual ? (actual === "oscuro" ? "claro" : "oscuro") : (oscuroSistema ? "claro" : "oscuro");
+    document.documentElement.setAttribute("data-tema", siguiente);
+    almacen.set(CLAVE_TEMA, siguiente);
+  });
+
+  /* pestañas */
+  PESTANAS.forEach(k => $("#tab-" + k).addEventListener("click", () => irA(k)));
+  $("#g_clase").addEventListener("change", pintarGuia);
+  $("#btImprimirGuia").addEventListener("click", () => window.print());
+
+  /* formulario */
+  $("#form").addEventListener("input", e => {
+    if (e.target && e.target.id) e.target.dataset.tocado = "1";
+    sincronizarDependientes(); render();
+  });
+  $("#form").addEventListener("change", e => {
+    if (e.target && e.target.name === "modo") aplicarModo();
+    if (e.target && e.target.id === "f_contexto") aplicarPreset(val("f_contexto"));
+    if (e.target && e.target.id) e.target.dataset.tocado = "1";
+    sincronizarDependientes(); render();
+  });
+  $("#form").addEventListener("submit", e => e.preventDefault());
+
+  /* chips */
+  const addDesde = (input, lista, repetible) => {
+    const v = input.value.trim(); if (!v) return;
+    if (repetible || lista.indexOf(v) < 0) lista.push(v);
+    input.value = ""; pintarChips(); render();
+  };
+  const LISTAS = {
+    f_addConsiderar: [() => considerar, false], f_addEvitar: [() => evitar, false],
+    f_addCadena: [() => cadenaPropuesta, true], f_addCadenaUsada: [() => cadenaUsada, true]
+  };
+  [["btAddConsiderar", "f_addConsiderar"], ["btAddEvitar", "f_addEvitar"],
+   ["btAddCadena", "f_addCadena"], ["btAddCadenaUsada", "f_addCadenaUsada"]].forEach(([bt, inp]) => {
+    $("#" + bt).addEventListener("click", () => addDesde($("#" + inp), LISTAS[inp][0](), LISTAS[inp][1]));
+    $("#" + inp).addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); addDesde($("#" + inp), LISTAS[inp][0](), LISTAS[inp][1]); }
+    });
+  });
+  $("#btVaciarCadena").addEventListener("click", () => { cadenaPropuesta = []; pintarChips(); render(); });
+  $("#btVerCadena").addEventListener("click", () => irA("disenar"));
+
+  /* grupos */
+  $("#btIrGrupos").addEventListener("click", () => irA("grupos"));
+  const guardarComoGrupo = () => {
+    const sugerido = grupoActivo || val("f_contexto") || "Grupo sin nombre";
+    const nombre = prompt("¿Con qué nombre guardo este grupo?", sugerido);
+    if (!nombre) return;
+    const l = leerGrupos();
+    const i = l.findIndex(g => g.nombre === nombre);
+    const perfil = capturarPerfil(nombre);
+    if (i >= 0) { if (!confirm("Ya existe «" + nombre + "». ¿Lo sobrescribo?")) return; l[i] = perfil; }
+    else l.unshift(perfil);
+    guardarGrupos(l); grupoActivo = nombre; pintarGrupoActivo(); pintarGrupos();
+    flash("Grupo «" + nombre + "» guardado. La próxima vez lo cargas y solo llenas la sesión.", true);
+  };
+  $("#btGuardarGrupo").addEventListener("click", guardarComoGrupo);
+  $("#btNuevoGrupo").addEventListener("click", guardarComoGrupo);
+  $("#btSemillas").addEventListener("click", () => {
+    if (!confirm("Se agregan de nuevo las seis plantillas de fábrica. Tus grupos propios no se tocan. ¿Sigo?")) return;
+    const l = leerGrupos();
+    GRUPOS_SEMILLA.forEach(sem => { if (!l.some(g => g.nombre === sem.nombre)) l.push(JSON.parse(JSON.stringify(sem))); });
+    guardarGrupos(l); pintarGrupos();
+  });
+  $("#btAprendizajeAlGrupo").addEventListener("click", () => {
+    if (!grupoActivo) { flash("Primero carga o guarda el grupo al que pertenece esta sesión.", false); return; }
+    const l = leerGrupos();
+    const i = l.findIndex(g => g.nombre === grupoActivo);
+    if (i < 0) { flash("No encuentro ese grupo guardado.", false); return; }
+    const trozos = [val("f_fecha") || hoyISO()];
+    if (cadenaUsada.length) trozos.push("usé " + cadenaUsada.join(" → "));
+    if (val("f_queFunciono")) trozos.push("funcionó: " + val("f_queFunciono"));
+    if (val("f_dondeAtoro")) trozos.push("se atoró: " + val("f_dondeAtoro"));
+    if (trozos.length === 1) { flash("Escribe al menos qué funcionó o dónde se atoró.", false); return; }
+    const linea = trozos.join(" — ");
+    l[i].campos = l[i].campos || {};
+    l[i].campos.f_intentado = [l[i].campos.f_intentado, linea].filter(Boolean).join("\n");
+    l[i].plantilla = false;
+    guardarGrupos(l);
+    flash("Aprendizaje guardado en «" + grupoActivo + "». El próximo encargo con ellos ya lo trae.", true);
+  });
+
+  /* respaldo total */
+  $("#btExportarTodo").addEventListener("click", () => {
+    const paquete = { tablero: "facilitacion", version: 1, exportado: hoyISO(),
+                      grupos: leerGrupos(), historial: leerHistorial() };
+    descargar("respaldo-facilitacion-" + hoyISO() + ".json", JSON.stringify(paquete, null, 2), "application/json");
+  });
+  $("#btImportarTodo").addEventListener("click", () => $("#fileTodo").click());
+  $("#fileTodo").addEventListener("change", e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (d.tablero !== "facilitacion" || (!d.grupos && !d.historial)) throw new Error("formato");
+        if (!confirm("Esto reemplaza los grupos y el historial de este navegador por los del respaldo. ¿Sigo?")) return;
+        if (d.grupos) guardarGrupos(d.grupos);
+        if (d.historial) almacen.set(CLAVE_HIST, d.historial.slice(0, 20));
+        pintarGrupos(); pintarHistorial();
+        flash("Respaldo importado: " + ((d.grupos || []).length) + " grupos y " + ((d.historial || []).length) + " encargos.", true);
+      } catch (err) {
+        flash("Ese archivo no es un respaldo del tablero.", false);
+      }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  });
+
+  /* acciones del panel */
+  $("#btCopiar").addEventListener("click", () => {
+    copiar(ultimo.texto, ok => flash(ok ? "Encargo copiado. Pégalo en Claude." : "No se pudo copiar automáticamente; selecciona el texto del recuadro y cópialo.", ok));
+  });
+  $("#btMd").addEventListener("click", () => descargar(archivoNombre(val("f_nombre"), "md"), ultimo.texto, "text/markdown"));
+  $("#btJson").addEventListener("click", () => {
+    const paquete = { generado: hoyISO(), modo: ultimo.d.modo, diagnostico: ultimo.d, encargo: ultimo.texto };
+    descargar(archivoNombre(val("f_nombre"), "json"), JSON.stringify(paquete, null, 2), "application/json");
+  });
+  $("#btGuardar").addEventListener("click", () => {
+    if (!almacen.ok()) { flash("Este navegador no permite guardar; usa «Descargar .md».", false); return; }
+    const h = leerHistorial();
+    h.unshift({
+      titulo: val("f_nombre") || (ultimo.d.contexto || "Encargo sin nombre"),
+      modo: ultimo.d.modo, guardado: hoyISO(), grupo: grupoActivo,
+      cadena: (ultimo.d.modo === "4" ? cadenaUsada : cadenaPropuesta).slice(),
+      texto: ultimo.texto, estado: estadoFormulario()
+    });
+    almacen.set(CLAVE_HIST, h.slice(0, 20));
+    flash("Guardado en el historial.", true);
+  });
+  $("#btImprimir").addEventListener("click", () => window.print());
+  $("#btLimpiar").addEventListener("click", () => {
+    if (!confirm("¿Limpiar todo el formulario? El historial guardado no se toca.")) return;
+    $("#form").reset();
+    $$("#form [data-tocado]").forEach(e => delete e.dataset.tocado);
+    considerar = []; evitar = []; cadenaPropuesta = []; cadenaUsada = [];
+    sesionEvaluada = ""; grupoActivo = "";
+    $$('input[name="entregable"]')[0].checked = true;
+    pintarChips(); pintarGrupoActivo(); sincronizarDependientes(); aplicarModo(); render();
+    almacen.set(CLAVE_BORRADOR, null);
+  });
+
+  /* banco */
+  ["b_texto", "b_proposito", "b_fase", "b_fuente", "b_grupo", "b_sinEscritura", "b_movimiento"].forEach(id =>
+    $("#" + id).addEventListener("input", pintarBanco));
+  $("#b_tiempo").addEventListener("input", () => {
+    const t = Number($("#b_tiempo").value);
+    $("#b_tiempoTxt").textContent = t === 0 ? "sin límite" : t + " minutos";
+    pintarBanco();
+  });
+  $("#btLimpiarFiltros").addEventListener("click", () => {
+    ["b_texto", "b_proposito", "b_fase", "b_fuente", "b_grupo"].forEach(id => $("#" + id).value = "");
+    $("#b_sinEscritura").checked = false; $("#b_movimiento").checked = false;
+    $("#b_tiempo").value = 0; $("#b_tiempoTxt").textContent = "sin límite";
+    pintarBanco();
+  });
+  $("#btImportarCat").addEventListener("click", () => $("#fileCat").click());
+  $("#fileCat").addEventListener("change", e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const datos = JSON.parse(r.result);
+        if (!Array.isArray(datos) || !datos.length || !datos[0].nombre) throw new Error("formato");
+        CATALOGO = datos;
+        almacen.set("fac_catalogo", CATALOGO);
+        llenarSelectsBanco(); llenarDatalist(); pintarBanco(); pintarGuia();
+        flash("Catálogo importado: " + CATALOGO.length + " técnicas.", true);
+      } catch (err) {
+        flash("Ese archivo no tiene el formato del catálogo (un arreglo de técnicas con «nombre»).", false);
+      }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  });
+  $("#btExportarCat").addEventListener("click", () => descargar("catalogo-facilitacion.json", JSON.stringify(CATALOGO, null, 2), "application/json"));
+
+  /* estado inicial */
+  const borrador = almacen.get(CLAVE_BORRADOR, null);
+  if (borrador) aplicarEstado(borrador);
+  if (!val("f_fecha")) $("#f_fecha").value = hoyISO();
+  llenarSelectsBanco(); llenarDatalist();
+  sincronizarDependientes(); aplicarModo(); pintarChips(); pintarGrupoActivo(); render(); pintarBanco();
+});
+</script>
+</body>
+</html>
