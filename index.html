@@ -239,26 +239,11 @@ ul.tecnicas b{font-weight:600}
       </div>
     </section>
 
-    <!-- Bloque 0 -->
+    <!-- Bloque 0a: contexto y grupo -->
     <section class="bloque" data-modos="1,2,3,4">
-      <h2>Identificación</h2>
-      <div class="barraGrupo">
-        <label for="sel_grupo" style="margin:0">Grupo:</label>
-        <select id="sel_grupo" style="width:auto; min-width:230px; max-width:100%"></select>
-        <span class="espaciador" style="flex:1"></span>
-        <button class="bt min" type="button" id="btIrGrupos">Ver todos</button>
-        <button class="bt min" type="button" id="btGuardarGrupo">Guardar estos datos como grupo</button>
-      </div>
-      <div class="dosfila">
-        <div class="campo">
-          <label for="f_nombre">Nombre del encuentro</label>
-          <input type="text" id="f_nombre" placeholder="Foro sobre el futuro de la presa">
-        </div>
-        <div class="campo">
-          <label for="f_fecha">Fecha</label>
-          <input type="date" id="f_fecha">
-        </div>
-      </div>
+      <h2>¿Con quién?</h2>
+      <p class="pista">Elige el contexto y aparecen tus grupos de ese tipo. Con uno cargado, el diagnóstico
+        se llena casi solo.</p>
       <div class="campo">
         <label for="f_contexto">Contexto</label>
         <select id="f_contexto">
@@ -277,6 +262,29 @@ ul.tecnicas b{font-weight:600}
       <div class="campo oculto" id="c_contextoOtro">
         <label for="f_contextoOtro">¿Cuál contexto?</label>
         <input type="text" id="f_contextoOtro">
+      </div>
+      <div class="campo" style="margin-bottom:6px">
+        <label id="lblPlantillas">Grupos de este contexto</label>
+        <div class="botonera" id="plantillasGrupo" style="margin-top:2px"></div>
+      </div>
+      <div class="botonera">
+        <button class="bt min" type="button" id="btGuardarGrupo">Guardar estos datos como grupo</button>
+        <button class="bt min" type="button" id="btIrGrupos">Ver todos los grupos</button>
+      </div>
+    </section>
+
+    <!-- Bloque 0b: identificación -->
+    <section class="bloque" data-modos="1,2,3,4">
+      <h2>Identificación</h2>
+      <div class="dosfila">
+        <div class="campo">
+          <label for="f_nombre">Nombre del encuentro</label>
+          <input type="text" id="f_nombre" placeholder="Foro sobre el futuro de la presa">
+        </div>
+        <div class="campo">
+          <label for="f_fecha">Fecha</label>
+          <input type="date" id="f_fecha">
+        </div>
       </div>
     </section>
 
@@ -766,8 +774,9 @@ ul.tecnicas b{font-weight:600}
     <h3>El flujo, en cinco pasos</h3>
     <ol class="pasos">
       <li>Abre el archivo y elige el <b>modo</b> (arriba de todo).</li>
-      <li>Carga el <b>grupo</b> si ya lo tienes guardado: llena de golpe quiénes son, el lugar, los materiales y
-        todo lo que no cambia entre sesiones.</li>
+      <li>Elige el <b>contexto</b>: ahí mismo aparecen tus grupos de ese tipo como botones. Un clic carga de
+        golpe quiénes son, el lugar, los materiales y todo lo que no cambia entre sesiones; otro clic en el
+        mismo botón lo quita.</li>
       <li>Llena solo lo de esta sesión: propósito, fecha, tiempo, estado del grupo y tensiones. La barra de arriba
         del encargo te dice qué tan listo está y qué falta.</li>
       <li>Si quieres, pasa al <b>Banco</b> o a la <b>Guía</b> y suma alguna técnica, o arma tu cadena tentativa
@@ -781,7 +790,8 @@ ul.tecnicas b{font-weight:600}
     <p>Los campos que más cuesta llenar no son de la sesión, son del <b>grupo</b>: quiénes son, si se conocen, la
       comodidad con la escritura, si hay autoridad presente, el lugar, los materiales que hay, las restricciones de
       siempre, las voces que suelen quedar fuera y la historia previa. Eso no cambia de una sesión a otra.</p>
-    <p>En la pestaña <b>Grupos</b> guardas cada uno con su nombre —<i>Comité de agua de La Florida</i>,
+    <p>Los grupos que corresponden al contexto elegido aparecen como botones en la primera sección, para
+      cargarlos sin salir de ahí. En la pestaña <b>Grupos</b> guardas cada uno con su nombre —<i>Comité de agua de La Florida</i>,
       <i>Cosecha Colectiva — grupo San Juan</i>, <i>Etimologías 2026-2</i>— y la próxima vez lo cargas de un clic.
       Vienen seis plantillas de fábrica (asamblea ejidal, grupo de ahorro, comité, clase de 90 minutos, foro
       territorial, tutoría): úsalas como punto de partida, edítalas con lo que sabes de cada grupo real y guárdalas
@@ -1186,28 +1196,45 @@ function gruposElegibles() {
   }
   return propios;
 }
+const TOPE_PLANTILLAS = 8;
 function pintarGrupoActivo() {
-  const sel = $("#sel_grupo");
-  if (!sel) return;
-  const elegibles = gruposElegibles();
+  const cont = $("#plantillasGrupo");
+  if (!cont) return;
   const ctx = val("f_contexto");
-  sel.innerHTML = "";
-  const vacia = document.createElement("option");
-  vacia.value = "";
-  vacia.textContent = grupoActivo ? "— quitar el grupo —" : "— ninguno —";
-  sel.appendChild(vacia);
-  elegibles.forEach(g => {
-    const o = document.createElement("option");
-    o.value = g.nombre; o.textContent = g.nombre;
-    sel.appendChild(o);
-  });
+  const elegibles = gruposElegibles();
+  $("#lblPlantillas").textContent = ctx ? "Grupos de este contexto" : "Tus grupos";
+  cont.innerHTML = "";
   if (!elegibles.length) {
-    const o = document.createElement("option");
-    o.value = ""; o.disabled = true;
-    o.textContent = ctx ? "(no tienes grupos de este contexto)" : "(no hay grupos guardados)";
-    sel.appendChild(o);
+    const aviso = document.createElement("span");
+    aviso.className = "ayuda";
+    aviso.textContent = ctx
+      ? "Todavía no tienes grupos de este contexto. Llena el formulario y guárdalo abajo con el nombre del grupo real."
+      : "Elige un contexto y aquí aparecen tus grupos, listos para cargar de un clic.";
+    cont.appendChild(aviso);
+    return;
   }
-  sel.value = grupoActivo || "";
+  elegibles.slice(0, TOPE_PLANTILLAS).forEach(g => {
+    const activo = g.nombre === grupoActivo;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "bt " + (activo ? "" : "sec");
+    b.textContent = (activo ? "✓ " : "") + g.nombre;
+    b.title = activo ? "Clic para quitar este grupo" : "Cargar este grupo";
+    b.setAttribute("aria-pressed", activo ? "true" : "false");
+    b.addEventListener("click", () => {
+      if (activo) { quitarGrupo(); return; }
+      aplicarGrupo(g);
+      flash("Cargué «" + g.nombre + "». Ahora solo el propósito, la fecha y las tensiones.", true);
+    });
+    cont.appendChild(b);
+  });
+  if (elegibles.length > TOPE_PLANTILLAS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "bt min";
+    b.textContent = "Ver los " + elegibles.length;
+    b.addEventListener("click", () => irA("grupos"));
+    cont.appendChild(b);
+  }
 }
 function quitarGrupo() {
   if (!grupoActivo) return;
@@ -1261,7 +1288,9 @@ function pintarGrupos() {
     }));
     bar.appendChild(mk("Borrar", () => {
       if (!confirm("¿Borrar «" + g.nombre + "»?")) return;
-      const l = leerGrupos(); l.splice(i, 1); guardarGrupos(l); pintarGrupos();
+      const l = leerGrupos(); l.splice(i, 1); guardarGrupos(l);
+      if (g.nombre === grupoActivo) grupoActivo = "";
+      pintarGrupos(); pintarGrupoActivo();
     }));
     div.appendChild(bar);
     cont.appendChild(div);
@@ -1597,7 +1626,7 @@ function estadoFormulario() {
   $$("#form input, #form select, #form textarea").forEach(e => {
     if (e.type === "radio") { if (e.checked) o.radios[e.name] = e.value; }
     else if (e.type === "checkbox") { o.checks[(e.name || e.id) + "|" + e.value] = e.checked; }
-    else if (e.id && e.id !== "sel_grupo") { o.campos[e.id] = e.value; }
+    else if (e.id) { o.campos[e.id] = e.value; }
   });
   return o;
 }
@@ -1972,14 +2001,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* grupos */
   $("#btIrGrupos").addEventListener("click", () => irA("grupos"));
-  $("#sel_grupo").addEventListener("change", e => {
-    const nombre = e.target.value;
-    if (!nombre) { quitarGrupo(); return; }
-    const g = grupoDe(nombre);
-    if (!g) { flash("No encuentro ese grupo.", false); pintarGrupoActivo(); return; }
-    aplicarGrupo(g);
-    flash("Cargué «" + g.nombre + "». Ahora solo el propósito, la fecha y las tensiones.", true);
-  });
   const guardarComoGrupo = () => {
     const sugerido = grupoActivo || val("f_contexto") || "Grupo sin nombre";
     const nombre = prompt("¿Con qué nombre guardo este grupo?", sugerido);
