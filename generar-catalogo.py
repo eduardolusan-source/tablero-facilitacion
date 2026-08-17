@@ -111,7 +111,32 @@ SEMILLA = [
 
 CAMPOS = ["n","nombre","archivo","fuente","tipo","proposito","fase","grupoMin","grupoMax",
           "minutosMin","minutosMax","requiereEscritura","requiereMovimiento","paraQueSirve",
-          "tiempoTexto","grupoTexto"]
+          "tiempoTexto","grupoTexto","nivelMateriales"]
+
+# Qué hay que llevar, leído de la sección «Espacio y materiales» de cada ficha.
+# 0 = nada (voz y cuerpo) · 1 = papel y plumones · 2 = + tarjetas, cinta y objetos
+# 3 = + impresiones, música o proyector
+MATERIALES = [
+    (3, r"proyector|video|v[ií]deo|diapositiva|fotocopi|mimeografiad|impresion|impres[ao]s|"
+        r"copias|ca[ñn][oó]n|pel[ií]cula|audiovisual"),
+    (2, r"tarjeta|post-?it|postit|cinta|maskin|alfiler|cartulina|sobres|cart[oó]n|"
+        r"semilla|piedra|frijol|botella|arena|dulce|pelota|estambre|objeto|naipe|baraja|"
+        r"m[uú]sica|radio|cassette|grabadora|campana|tambor"),
+    (1, r"papel[oó]n|papel[oó]grafo|papelotes|papel|hojas?\b|plum[oó]n|plumones|pluma|"
+        r"bol[ií]grafo|marcador|pizarr[oó]n|gis|l[aá]piz|l[aá]pices|crey[oó]n|crayola|rotafolio"),
+]
+SIN_MATERIALES = r"nada indispensable|no se necesita|nada se necesita|sin materiales|ning[uú]n material|nada especial"
+
+def nivel_materiales(txt):
+    m = re.search(r"##\s*Espacio y materiales\s*\n+(.+?)(?:\n\s*\n|\n##)", txt, re.S)
+    if not m: return 0
+    sec = " ".join(m.group(1).split())
+    if re.search(SIN_MATERIALES, sec, re.I): return 0
+    # lo marcado como opcional no obliga a llevar nada
+    sec = "; ".join(t for t in re.split(r"[;.]", sec) if not re.search(r"opcional", t, re.I))
+    for nivel, patron in MATERIALES:
+        if re.search(patron, sec, re.I): return nivel
+    return 0
 
 def base():
     fichas = {}
@@ -120,7 +145,7 @@ def base():
                          proposito=prop, fase=fase, grupoMin=gmin, grupoMax=gmax,
                          minutosMin=mmin, minutosMax=mmax, requiereEscritura=esc,
                          requiereMovimiento=mov, paraQueSirve=para,
-                         tiempoTexto=None, grupoTexto=None)
+                         tiempoTexto=None, grupoTexto=None, nivelMateriales=1)
     return fichas
 
 def a_minutos(txt):
@@ -198,6 +223,7 @@ def leer_ficha(ruta):
     m = re.search(r"##\s*Para qué sirve\s*\n+(.+?)(?:\n\s*\n|\n##)", txt, re.S)
     if m:
         datos["paraQueSirve"] = recortar(" ".join(m.group(1).split()))
+    datos["nivelMateriales"] = nivel_materiales(txt)
     cuerpo = txt.lower()
     if re.search(r"sin (necesidad de )?(leer|escribir)|no requiere (leer|escribir|saber)|sin escritura|no saben leer", cuerpo):
         datos["requiereEscritura"] = False
