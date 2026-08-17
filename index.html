@@ -243,9 +243,10 @@ ul.tecnicas b{font-weight:600}
     <section class="bloque" data-modos="1,2,3,4">
       <h2>Identificación</h2>
       <div class="barraGrupo">
-        <span>Grupo: <span class="quien" id="txtGrupoActivo">ninguno</span></span>
+        <label for="sel_grupo" style="margin:0">Grupo:</label>
+        <select id="sel_grupo" style="width:auto; min-width:230px; max-width:100%"></select>
         <span class="espaciador" style="flex:1"></span>
-        <button class="bt min" type="button" id="btIrGrupos">Cargar un grupo</button>
+        <button class="bt min" type="button" id="btIrGrupos">Ver todos</button>
         <button class="bt min" type="button" id="btGuardarGrupo">Guardar estos datos como grupo</button>
       </div>
       <div class="dosfila">
@@ -1172,8 +1173,48 @@ function aplicarGrupo(g) {
   grupoActivo = g.nombre;
   sincronizarDependientes(); pintarGrupoActivo(); render();
 }
+function grupoDe(nombre) { return leerGrupos().find(g => g.nombre === nombre) || null; }
+function gruposElegibles() {
+  const ctx = val("f_contexto");
+  const todos = leerGrupos();
+  if (!ctx) return todos;
+  const propios = todos.filter(g => (g.campos || {}).f_contexto === ctx);
+  /* el grupo cargado siempre se ve, aunque su contexto ya no coincida */
+  if (grupoActivo && !propios.some(g => g.nombre === grupoActivo)) {
+    const activo = todos.find(g => g.nombre === grupoActivo);
+    if (activo) propios.unshift(activo);
+  }
+  return propios;
+}
 function pintarGrupoActivo() {
-  $("#txtGrupoActivo").textContent = grupoActivo || "ninguno";
+  const sel = $("#sel_grupo");
+  if (!sel) return;
+  const elegibles = gruposElegibles();
+  const ctx = val("f_contexto");
+  sel.innerHTML = "";
+  const vacia = document.createElement("option");
+  vacia.value = "";
+  vacia.textContent = grupoActivo ? "— quitar el grupo —" : "— ninguno —";
+  sel.appendChild(vacia);
+  elegibles.forEach(g => {
+    const o = document.createElement("option");
+    o.value = g.nombre; o.textContent = g.nombre;
+    sel.appendChild(o);
+  });
+  if (!elegibles.length) {
+    const o = document.createElement("option");
+    o.value = ""; o.disabled = true;
+    o.textContent = ctx ? "(no tienes grupos de este contexto)" : "(no hay grupos guardados)";
+    sel.appendChild(o);
+  }
+  sel.value = grupoActivo || "";
+}
+function quitarGrupo() {
+  if (!grupoActivo) return;
+  const nombre = grupoActivo;
+  grupoActivo = "";
+  pintarGrupoActivo(); pintarGrupos(); render();
+  flash("Quitaste «" + nombre + "». Los datos siguen en el formulario; usa «Limpiar» si quieres vaciarlos.", true);
 }
 function pintarGrupos() {
   const cont = $("#listaGrupos");
@@ -1190,10 +1231,14 @@ function pintarGrupos() {
     const bar = document.createElement("div");
     bar.className = "botonera";
     const mk = (txt, fn, cls) => { const b = document.createElement("button"); b.type = "button"; b.className = "bt " + (cls || "min"); b.textContent = txt; b.addEventListener("click", fn); return b; };
-    bar.appendChild(mk("Usar este grupo", () => {
-      aplicarGrupo(g); irA("disenar");
-      flash("Cargué «" + g.nombre + "». Ahora solo el propósito, la fecha y las tensiones.", true);
-    }, "sec"));
+    if (g.nombre === grupoActivo) {
+      bar.appendChild(mk("Dejar de usar este grupo", () => quitarGrupo(), "sec"));
+    } else {
+      bar.appendChild(mk("Usar este grupo", () => {
+        aplicarGrupo(g); irA("disenar");
+        flash("Cargué «" + g.nombre + "». Ahora solo el propósito, la fecha y las tensiones.", true);
+      }, "sec"));
+    }
     bar.appendChild(mk("Actualizar con lo que tengo ahora", () => {
       if (!confirm("¿Sobrescribir «" + g.nombre + "» con los datos que están hoy en el formulario?")) return;
       const l = leerGrupos(); l[i] = capturarPerfil(g.nombre); guardarGrupos(l);
@@ -1552,7 +1597,7 @@ function estadoFormulario() {
   $$("#form input, #form select, #form textarea").forEach(e => {
     if (e.type === "radio") { if (e.checked) o.radios[e.name] = e.value; }
     else if (e.type === "checkbox") { o.checks[(e.name || e.id) + "|" + e.value] = e.checked; }
-    else if (e.id) { o.campos[e.id] = e.value; }
+    else if (e.id && e.id !== "sel_grupo") { o.campos[e.id] = e.value; }
   });
   return o;
 }
@@ -1899,7 +1944,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("#form").addEventListener("change", e => {
     if (e.target && e.target.name === "modo") aplicarModo();
-    if (e.target && e.target.id === "f_contexto") aplicarPreset(val("f_contexto"));
+    if (e.target && e.target.id === "f_contexto") { aplicarPreset(val("f_contexto")); pintarGrupoActivo(); }
     if (e.target && e.target.id) e.target.dataset.tocado = "1";
     sincronizarDependientes(); render();
   });
@@ -1927,6 +1972,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* grupos */
   $("#btIrGrupos").addEventListener("click", () => irA("grupos"));
+  $("#sel_grupo").addEventListener("change", e => {
+    const nombre = e.target.value;
+    if (!nombre) { quitarGrupo(); return; }
+    const g = grupoDe(nombre);
+    if (!g) { flash("No encuentro ese grupo.", false); pintarGrupoActivo(); return; }
+    aplicarGrupo(g);
+    flash("Cargué «" + g.nombre + "». Ahora solo el propósito, la fecha y las tensiones.", true);
+  });
   const guardarComoGrupo = () => {
     const sugerido = grupoActivo || val("f_contexto") || "Grupo sin nombre";
     const nombre = prompt("¿Con qué nombre guardo este grupo?", sugerido);
