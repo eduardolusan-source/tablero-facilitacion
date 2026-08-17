@@ -18,9 +18,9 @@ servidor, no hay base de datos.
   sesión larga, proceso de varias sesiones).
 - **Grupos** — lo que no cambia entre sesiones (quiénes son, lugar, materiales, voces que quedan
   fuera, historia previa) se guarda una vez por grupo y se reusa.
-- **Banco** — las 69 técnicas con filtros por propósito, fase del rombo, tamaño, tiempo, "sin
+- **Banco** — las 79 técnicas con filtros por propósito, fase del rombo, tamaño, tiempo, "sin
   escritura" y "requiere moverse".
-- **Guía por función** — las mismas 69 agrupadas por lo que resuelven, con lente para clase.
+- **Guía por función** — las mismas 79 agrupadas por lo que resuelven, con lente para clase.
 - **Historial** — encargos guardados, evaluación de una sesión ya diseñada, y respaldo completo en
   un `.json`.
 
@@ -39,9 +39,11 @@ reescribe el bloque entre las marcas `CATALOGO_INICIO` / `CATALOGO_FIN` del HTML
 
 Las estructuras 01–43 provienen de Liberating Structures (Lipmanowicz & McCandless), licencia
 **CC BY-SA 4.0**; las descripciones derivadas de ellas se comparten bajo la misma licencia. Las
-técnicas 44–69 son resúmenes en palabras propias de ideas de *The Art of Gathering* (Parker),
+técnicas 44–79 son resúmenes en palabras propias de ideas de *The Art of Gathering* (Parker),
 *Gamestorming* (Gray, Brown & Macanufo), *Facilitator's Guide to Participatory Decision-Making*
 (Kaner et al.), *The Art of Focused Conversation* (ICA), *Sitting in the Fire* (Mindell),
 *Community* (Block), *Holding Change* (adrienne maree brown) y *80 herramientas para el desarrollo
-participativo* (Geilfus, IICA — obra de libre reproducción citando al autor). Este repositorio
+participativo* (Geilfus, IICA — obra de libre reproducción citando al autor), *Técnicas participativas
+para la educación popular* (Vargas y Bustillos, Alforja/CIDE) y *Training for Transformation* (Hope y
+Timmel). Este repositorio
 contiene solo una línea descriptiva por técnica, no el contenido de las fichas ni de los libros.

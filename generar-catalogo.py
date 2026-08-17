@@ -23,6 +23,8 @@ from pathlib import Path
 LS = "Liberating Structures"
 PK = "Parker"
 GS = "Gamestorming"
+EP = "Alforja / educación popular"
+HT = "Hope y Timmel"
 
 # n, nombre, fuente, tipo, propósitos, fases, gMin, gMax, minMin, minMax, escritura, movimiento, para qué sirve
 SEMILLA = [
@@ -95,6 +97,16 @@ SEMILLA = [
  (67,"Soluciones locales primero","Geilfus / DRP","análisis",["descubrir lo que ya funciona"],["divergente","convergente"],8,30,60,180,False,False,"Encuentra y evalúa lo que la comunidad ya ha probado antes de traer soluciones de fuera. Incluye FODA participativo."),
  (68,"Mapa de ordenamiento, plan de acción y responsabilidades","Geilfus / DRP","planificación",["planear con responsables","pasar a la acción"],["convergente","cierre"],10,40,120,180,False,True,"Del acuerdo al quién hace qué, cuándo y con qué recursos, con el reparto realista frente a las instituciones."),
  (69,"Calendarios estacionales y reloj de uso del tiempo","Geilfus / DRP","diagnóstico rural",["diagnóstico del territorio"],["divergente","convergente"],6,15,60,120,False,False,"Estacionalidad, carga de trabajo y enfoque de género: cuándo pasan las cosas y quién carga el trabajo."),
+ (70,"Sociodrama y juego de roles",EP,"técnicas con actuación",["representar para analizar"],["divergente","gemido"],8,40,45,90,False,True,"Poner en escena un hecho real del grupo para poder mirarlo desde afuera y analizarlo entre todos."),
+ (71,"Dinámicas de animación y presentación",EP,"animación",["conectar al arrancar"],["divergente"],8,40,10,30,False,True,"Crear ambiente de confianza, presentarse y recuperar la energía del grupo."),
+ (72,"El rumor y otros ejercicios de comunicación",EP,"comunicación",["aprender a comunicarse"],["divergente"],8,40,30,60,False,False,"Hacer visible cómo se distorsiona un mensaje y por qué la comunicación de una sola vía es peor."),
+ (73,"Ejercicios de abstracción y síntesis",EP,"abstracción",["practicar la síntesis"],["divergente","convergente"],5,40,15,45,True,False,"Ejercitar el resumen, la asociación de conceptos y la distinción entre hecho e interpretación."),
+ (74,"La baraja de la planificación",EP,"organización y planificación",["planear con responsables"],["convergente"],8,40,60,90,True,False,"Descubrir jugando cuáles son los pasos de una planificación y en qué orden van."),
+ (75,"Vivencias sobre la organización",EP,"organización y planificación",["sentir la organización"],["divergente","gemido"],10,40,45,75,False,True,"Sentir en el cuerpo la diferencia entre la acción espontánea y la acción organizada."),
+ (76,"El afiche y la lectura colectiva de imágenes",EP,"análisis con imágenes",["leer imágenes y símbolos","conversación profunda sin debate"],["divergente","gemido"],8,40,60,90,False,False,"Decir en símbolos lo que no se puede decir en argumentos, y descodificarlo entre todos."),
+ (77,"Evaluación participativa",HT,"evaluación",["evaluar un proceso largo","analizar o cerrar una sesión"],["convergente","cierre"],10,40,240,None,True,False,"Que el propio grupo evalúe su programa, con sus preguntas e indicadores, y se quede con la información."),
+ (78,"Evaluación rápida de un taller",HT,"evaluación",["analizar o cerrar una sesión"],["cierre"],5,40,15,60,True,False,"Ajustar un taller mientras todavía se puede, y cerrarlo aprendiendo."),
+ (79,"Valoración de impacto a tres niveles",HT,"evaluación",["evaluar un proceso largo"],["convergente","cierre"],6,30,240,None,True,False,"Valorar qué cambió de verdad en las personas, en la organización y en la comunidad tras años de trabajo."),
 ]
 
 CAMPOS = ["n","nombre","archivo","fuente","tipo","proposito","fase","grupoMin","grupoMax",
